@@ -1,0 +1,32 @@
+# 仓库初始化
+```
+git init
+git remote add origin https://github.com/nanfengovo/RCS-Design.git
+```
+
+# 配置.gitignore
+```
+#操作系统
+.DS_Store
+
+# office 锁文件
+~$*
+
+# 前端
+node_modules
+dist/
+.pnpm-store/
+pnpm-debug.log
+
+# 后端
+bin/
+obj/
+TestResults/
+*.suo
+*.user
+*.userprefs
+*.sln.docstates
+.vs/
+.abpstudio/
+```
+

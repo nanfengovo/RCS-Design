@@ -1,0 +1,31 @@
+<Solution>
+    <Folder Name="/src/" />
+    <Folder Name="/src/Adapters/" />
+    <Folder Name="/src/Application/">
+        <Project Path="src/SIASUN.RCS.Application.Contracts/SIASUN.RCS.Application.Contracts.csproj" />
+        <Project Path="src/SIASUN.RCS.Application/SIASUN.RCS.Application.csproj" />
+    </Folder>
+    <Folder Name="/src/Core/" />
+    <Folder Name="/src/Domain.Shared/">
+        <Project Path="src/SIASUN.RCS.Domain.Shared/SIASUN.RCS.Domain.Shared.csproj" />
+    </Folder>
+    <Folder Name="/src/Domain/">
+        <Project Path="src/SIASUN.RCS.Domain/SIASUN.RCS.Domain.csproj" />
+    </Folder>
+    <Folder Name="/src/Hosting/">
+        <Project Path="src/SIASUN.RCS.DbMigrator/SIASUN.RCS.DbMigrator.csproj" />
+        <Project Path="src/SIASUN.RCS.HttpApi.Client/SIASUN.RCS.HttpApi.Client.csproj" />
+        <Project Path="src/SIASUN.RCS.HttpApi.Host/SIASUN.RCS.HttpApi.Host.csproj" />
+        <Project Path="src/SIASUN.RCS.HttpApi/SIASUN.RCS.HttpApi.csproj" />
+    </Folder>
+    <Folder Name="/src/Infrastructure/">
+        <Project Path="src/SIASUN.RCS.EntityFrameworkCore/SIASUN.RCS.EntityFrameworkCore.csproj" />
+    </Folder>
+    <Folder Name="/test/">
+        <Project Path="test/SIASUN.RCS.Application.Tests/SIASUN.RCS.Application.Tests.csproj" />
+        <Project Path="test/SIASUN.RCS.Domain.Tests/SIASUN.RCS.Domain.Tests.csproj" />
+        <Project Path="test/SIASUN.RCS.EntityFrameworkCore.Tests/SIASUN.RCS.EntityFrameworkCore.Tests.csproj" />
+        <Project Path="test/SIASUN.RCS.HttpApi.Client.ConsoleTestApp/SIASUN.RCS.HttpApi.Client.ConsoleTestApp.csproj" />
+        <Project Path="test/SIASUN.RCS.TestBase/SIASUN.RCS.TestBase.csproj" />
+    </Folder>
+</Solution>

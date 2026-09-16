@@ -1,0 +1,22 @@
+#操作系统
+.DS_Store
+
+# office 锁文件
+~$*
+
+# 前端
+node_modules
+dist/
+.pnpm-store/
+pnpm-debug.log
+
+# 后端
+bin/
+obj/
+TestResults/
+*.suo
+*.user
+*.userprefs
+*.sln.docstates
+.vs/
+.abpstudio/
