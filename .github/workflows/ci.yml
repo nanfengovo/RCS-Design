@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.0'        # 匹配项目使用的 .NET 版本
+          dotnet-version: '10.0.303'        # 匹配项目使用的 .NET 版本
 
       # restore：下载 NuGet 包
       # --verbosity quiet：只显示错误，减少日志噪音

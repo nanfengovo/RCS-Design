@@ -103,5 +103,6 @@
     "node": ">=20.19.0",
     "pnpm": ">=10.5.0"
   },
+  "packageManager": "pnpm@11.9.0",
   "website": "https://admin.soybeanjs.cn"
 }
