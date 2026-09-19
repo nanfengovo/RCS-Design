@@ -1,0 +1,122 @@
+# ============================================================
+# CI 工作流 - 提交/PR 时自动运行代码检查
+# ============================================================
+# 触发条件：
+#   - push 到 main 或 develop 分支
+#   - 任何 Pull Request
+#
+# 包含两个并行 Job：
+#   1. backend-checks：后端编译 + 格式化 + 单元测试
+#   2. frontend-checks：前端类型检查 + lint + 编译
+# ============================================================
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  # ----------------------------------------------------------
+  # 后端检查（.NET 10）
+  # ----------------------------------------------------------
+  # 为什么用 ubuntu-latest：
+  #   .NET Core 是跨平台的，测试用的是 SQLite InMemory（见
+  #   test/SIASUN.RCS.EntityFrameworkCore.Tests/ 下的
+  #   RCSEntityFrameworkCoreTestModule.cs），不依赖 SQL Server，
+  #   所以在 Linux 上也能跑。用 Ubuntu 比 Windows runner 便宜且快。
+  #
+  # 如果将来测试改用 SQL Server，需要加一个 service container：
+  #   services:
+  #     mssql:
+  #       image: mcr.microsoft.com/mssql/server:2022-latest
+  #       env:
+  #         ACCEPT_EULA: Y
+  #         SA_PASSWORD: YourPassword123!
+  #       ports:
+  #         - 1433:1433
+  # ----------------------------------------------------------
+  backend-checks:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: RCS/BackEnd    # 所有 step 默认在这个目录执行
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.3.0'        # 匹配项目使用的 .NET 版本
+
+      # restore：下载 NuGet 包
+      # --verbosity quiet：只显示错误，减少日志噪音
+      - name: Restore
+        run: dotnet restore SIASUN.RCS.slnx --verbosity quiet
+
+      # build：编译整个解决方案
+      # --no-restore：跳过 restore（上一步已执行）
+      # -warnaserror：把警告当错误，提前发现潜在问题
+      - name: Build
+        run: dotnet build SIASUN.RCS.slnx --no-restore -warnaserror
+
+      # format：检查代码格式是否符合 .editorconfig 规则
+      # --verify-no-changes：只检查不修改，格式不对就失败
+      # 如果你想自动修复格式，可以改成：dotnet format SIASUN.RCS.slnx
+      - name: Format Check
+        run: dotnet format SIASUN.RCS.slnx --verify-no-changes --no-restore
+
+      # test：运行所有单元测试
+      # --no-build：跳过编译（上一步已编译）
+      # --verbosity normal：显示测试结果摘要
+      - name: Test
+        run: dotnet test SIASUN.RCS.slnx --no-build --verbosity normal
+
+  # ----------------------------------------------------------
+  # 前端检查（Node.js + pnpm）
+  # ----------------------------------------------------------
+  # 为什么用 ubuntu-latest：
+  #   前端不依赖操作系统，Linux runner 启动更快、资源更多。
+  #
+  # pnpm install --frozen-lockfile：
+  #   CI 环境必须用 --frozen-lockfile，确保安装的版本
+  #   和 pnpm-lock.yaml 完全一致，不会意外升级依赖。
+  # ----------------------------------------------------------
+  frontend-checks:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: RCS/FrontEnd
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm/action-setup 会自动读取 package.json 里的
+      # "engines": { "pnpm": ">=10.5.0" } 来安装对应版本
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'              # 匹配 package.json 的 engines.node
+          cache: 'pnpm'                   # 缓存 pnpm 依赖，加速后续构建
+          cache-dependency-path: RCS/FrontEnd/pnpm-lock.yaml
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # typecheck：TypeScript 类型检查
+      # 对应 package.json 的 "typecheck": "vue-tsc --noEmit --skipLibCheck"
+      # --noEmit：只检查类型，不生成 JS 文件
+      - name: Type Check
+        run: pnpm typecheck
+
+      # lint：oxlint 代码规范检查
+      # 对应 package.json 的 "lint": "oxlint --fix && eslint --fix ."
+      # CI 中不加 --fix，只检查不修改，有错就失败
+      - name: Lint
+        run: pnpm oxlint --fix
+
+      # build：前端编译
+      # 对应 package.json 的 "build": "vite build --mode prod"
+      - name: Build
+        run: pnpm build
