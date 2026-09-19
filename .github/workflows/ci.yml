@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.3.0'        # 匹配项目使用的 .NET 版本
+          dotnet-version: '10.0.0'        # 匹配项目使用的 .NET 版本
 
       # restore：下载 NuGet 包
       # --verbosity quiet：只显示错误，减少日志噪音
@@ -97,7 +97,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'              # 匹配 package.json 的 engines.node
+          node-version: '24'              # Github Action 默认
           cache: 'pnpm'                   # 缓存 pnpm 依赖，加速后续构建
           cache-dependency-path: RCS/FrontEnd/pnpm-lock.yaml
 
