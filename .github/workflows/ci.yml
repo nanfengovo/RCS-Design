@@ -31,6 +31,15 @@ jobs:
         with:
           dotnet-version: '10.0.303'
 
+         # 3. 缓存 NuGet
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('RCS/BackEnd/**/*.csproj', 'RCS/BackEnd/**/packages.lock.json', 'RCS/BackEnd/NuGet.config', 'RCS/BackEnd/Directory.Packages.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
       # 3、安装 NuGet 依赖
       - name: Restore
         run: dotnet restore SIASUN.RCS.slnx
@@ -42,6 +51,17 @@ jobs:
       # 5、测试
       - name: Test
         run: dotnet test SIASUN.RCS.slnx --no-build
+
+      # 8. 保存后端构建产物
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rcs-backend-publish
+          path: RCS/BackEnd/publish
+          retention-days: 7
+          if-no-files-found: error
+
+      
 
 
   # =========================
