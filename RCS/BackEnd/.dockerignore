@@ -1,0 +1,12 @@
+**/.dockerignore
+**/.git
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/bin
+**/obj
+**/logs
+**/log
+**/*.db
+**/*.mdf
+**/*.ldf

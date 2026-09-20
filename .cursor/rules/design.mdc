@@ -1,0 +1,9 @@
+---
+description: Project design conventions
+alwaysApply: true
+---
+
+- Reuse existing design-system tokens and components; never hardcode hex or spacing.
+- At most two typefaces and one accent color.
+- Brand-first hierarchy; restrained motion. No hero cards, no oversized rounded corners.
+- Build responsive by default; verify desktop and mobile in the preview before finishing.
