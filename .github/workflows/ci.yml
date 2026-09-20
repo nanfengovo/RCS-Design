@@ -44,6 +44,11 @@ jobs:
       - name: Restore
         run: dotnet restore SIASUN.RCS.slnx
 
+      # 3.5、生成 OpenIddict 证书（*.pfx 被 gitignore，CI 需现场生成）
+      - name: Generate OpenIddict certificate
+        working-directory: RCS/BackEnd/src/SIASUN.RCS.HttpApi.Host
+        run: dotnet dev-certs https -v -ep openiddict.pfx -p e5353ed4-cb6b-40d6-9488-24af153e1afa
+
       # 4、编译
       - name: Build
         run: dotnet build SIASUN.RCS.slnx --no-restore
