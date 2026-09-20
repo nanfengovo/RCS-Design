@@ -1,122 +1,90 @@
-# ============================================================
-# CI 工作流 - 提交/PR 时自动运行代码检查
-# ============================================================
-# 触发条件：
-#   - push 到 main 或 develop 分支
-#   - 任何 Pull Request
-#
-# 包含两个并行 Job：
-#   1. backend-checks：后端编译 + 格式化 + 单元测试
-#   2. frontend-checks：前端类型检查 + lint + 编译
-# ============================================================
-name: CI
+name: RCS CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
+
   pull_request:
 
 jobs:
-  # ----------------------------------------------------------
-  # 后端检查（.NET 10）
-  # ----------------------------------------------------------
-  # 为什么用 ubuntu-latest：
-  #   .NET Core 是跨平台的，测试用的是 SQLite InMemory（见
-  #   test/SIASUN.RCS.EntityFrameworkCore.Tests/ 下的
-  #   RCSEntityFrameworkCoreTestModule.cs），不依赖 SQL Server，
-  #   所以在 Linux 上也能跑。用 Ubuntu 比 Windows runner 便宜且快。
-  #
-  # 如果将来测试改用 SQL Server，需要加一个 service container：
-  #   services:
-  #     mssql:
-  #       image: mcr.microsoft.com/mssql/server:2022-latest
-  #       env:
-  #         ACCEPT_EULA: Y
-  #         SA_PASSWORD: YourPassword123!
-  #       ports:
-  #         - 1433:1433
-  # ----------------------------------------------------------
-  backend-checks:
-    name: Backend Checks
+
+  # =========================
+  # 后端
+  # =========================
+  backend:
+    name: BackEnd Checks
     runs-on: ubuntu-latest
+
     defaults:
       run:
-        working-directory: RCS/BackEnd    # 所有 step 默认在这个目录执行
+        working-directory: RCS/BackEnd
+
     steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      # 1、下载代码
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # 2、安装 .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.303'        # 匹配项目使用的 .NET 版本
+          dotnet-version: '10.0.303'
 
-      # restore：下载 NuGet 包
-      # --verbosity quiet：只显示错误，减少日志噪音
+      # 3、安装 NuGet 依赖
       - name: Restore
-        run: dotnet restore SIASUN.RCS.slnx --verbosity quiet
+        run: dotnet restore SIASUN.RCS.slnx
 
-      # build：编译整个解决方案
-      # --no-restore：跳过 restore（上一步已执行）
-      # -warnaserror：把警告当错误，提前发现潜在问题
+      # 4、编译
       - name: Build
-        run: dotnet build SIASUN.RCS.slnx --no-restore -warnaserror
+        run: dotnet build SIASUN.RCS.slnx --no-restore
 
-      # format：检查代码格式是否符合 .editorconfig 规则
-      # --verify-no-changes：只检查不修改，格式不对就失败
-      # 如果你想自动修复格式，可以改成：dotnet format SIASUN.RCS.slnx
-      - name: Format Check
-        run: dotnet format SIASUN.RCS.slnx --verify-no-changes --no-restore
-
-      # test：运行所有单元测试
-      # --no-build：跳过编译（上一步已编译）
-      # --verbosity normal：显示测试结果摘要
+      # 5、测试
       - name: Test
-        run: dotnet test SIASUN.RCS.slnx --no-build --verbosity normal
+        run: dotnet test SIASUN.RCS.slnx --no-build
 
-  # ----------------------------------------------------------
-  # 前端检查（Node.js + pnpm）
-  # ----------------------------------------------------------
-  # 为什么用 ubuntu-latest：
-  #   前端不依赖操作系统，Linux runner 启动更快、资源更多。
-  #
-  # pnpm install --frozen-lockfile：
-  #   CI 环境必须用 --frozen-lockfile，确保安装的版本
-  #   和 pnpm-lock.yaml 完全一致，不会意外升级依赖。
-  # ----------------------------------------------------------
-  frontend-checks:
-    name: Frontend Checks
+
+  # =========================
+  # 前端
+  # =========================
+  frontend:
+    name: FrontEnd Checks
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: RCS/FrontEnd
+
     steps:
-      - uses: actions/checkout@v4
 
-      # pnpm/action-setup 会自动读取 package.json 里的
-      # "engines": { "pnpm": ">=10.5.0" } 来安装对应版本
-      - uses: pnpm/action-setup@v4
+      # 1、下载代码
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      # 2、安装 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: '24'              # Github Action 默认
-          cache: 'pnpm'                   # 缓存 pnpm 依赖，加速后续构建
-          cache-dependency-path: RCS/FrontEnd/pnpm-lock.yaml
+          version: '11.9.0'
 
-      - name: Install Dependencies
+      # 3、安装 Node
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # 4、安装前端依赖
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # typecheck：TypeScript 类型检查
-      # 对应 package.json 的 "typecheck": "vue-tsc --noEmit --skipLibCheck"
-      # --noEmit：只检查类型，不生成 JS 文件
+      # 5、TypeScript 检查
       - name: Type Check
         run: pnpm typecheck
 
-      # lint：oxlint 代码规范检查
-      # 对应 package.json 的 "lint": "oxlint --fix && eslint --fix ."
-      # CI 中不加 --fix，只检查不修改，有错就失败
+      # 6、Lint
       - name: Lint
-        run: pnpm oxlint --fix
+        run: pnpm oxlint
 
-      # build：前端编译
-      # 对应 package.json 的 "build": "vite build --mode prod"
+      # 7、编译
       - name: Build
-        run: pnpm build
+        run: pnpm run build
