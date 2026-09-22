@@ -14,6 +14,7 @@ using SIASUN.RCS.Common;
 using SIASUN.RCS.EntityFrameworkCore;
 using SIASUN.RCS.HealthChecks;
 using SIASUN.RCS.MultiTenancy;
+using SIASUN.RCS.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
@@ -214,6 +215,7 @@ public class RCSHttpApiHostModule : AbpModule
 
     private static void ConfigureSwagger(ServiceConfigurationContext context, IConfiguration configuration)
     {
+        _ = SwaggerDocStore.Instance;
         context.Services.AddAbpSwaggerGenWithOidc(
             configuration["AuthServer:Authority"]!,
             ["RCS"],

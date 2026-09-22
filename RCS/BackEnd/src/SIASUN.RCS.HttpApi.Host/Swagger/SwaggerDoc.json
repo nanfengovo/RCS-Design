@@ -1,0 +1,29 @@
+{
+  "operations": {
+    "POST /api/account/login": {
+      "summary": "账号密码登录",
+      "description": "校验用户名/邮箱和密码，建立登录会话。前后端分离拿 Bearer 请另走 /connect/token。",
+      "requestExample": {
+        "userNameOrEmailAddress": "admin",
+        "password": "你的密码",
+        "rememberMe": true
+      },
+      "responseExample": {
+        "result": 1,
+        "description": "Success"
+      },
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/login -H \"Content-Type: application/json\" -d \"{\\\"userNameOrEmailAddress\\\":\\\"admin\\\",\\\"password\\\":\\\"***\\\",\\\"rememberMe\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/login HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userNameOrEmailAddress\": \"admin\",\n  \"password\": \"***\",\n  \"rememberMe\": true\n}"
+        }
+      ]
+    }
+  }
+}

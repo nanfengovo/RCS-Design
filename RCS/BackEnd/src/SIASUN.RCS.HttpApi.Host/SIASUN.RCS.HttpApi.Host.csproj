@@ -41,6 +41,10 @@
   </ItemGroup>
 
   <ItemGroup>
+			<None Include="Swagger\SwaggerDoc.json">
+				<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+				<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+			</None>
     <PackageReference Include="Volo.Abp.Account.Web.OpenIddict" Version="10.3.0" />
   </ItemGroup>
 
