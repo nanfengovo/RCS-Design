@@ -1,0 +1,129 @@
+name: RCS CI
+
+on:
+  push:
+    branches: [main]
+
+  pull_request:
+
+jobs:
+
+  # =========================
+  # 后端
+  # =========================
+  backend:
+    name: BackEnd Checks
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: RCS/BackEnd
+
+    steps:
+
+      # 1、下载代码
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # 2、安装 .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.303'
+
+      # 3. 缓存 NuGet
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('RCS/BackEnd/**/*.csproj', 'RCS/BackEnd/**/packages.lock.json', 'RCS/BackEnd/NuGet.config', 'RCS/BackEnd/Directory.Packages.props') }}
+          restore-keys: | 
+           ${{ runner.os }}-nuget-
+
+      # 3、安装 NuGet 依赖
+      - name: Restore
+        run: dotnet restore SIASUN.RCS.slnx
+
+      # 3.5、生成 OpenIddict 证书（*.pfx 被 gitignore，CI 需现场生成）
+      - name: Generate OpenIddict certificate
+        working-directory: RCS/BackEnd/src/SIASUN.RCS.HttpApi.Host
+        run: dotnet dev-certs https -v -ep openiddict.pfx -p e5353ed4-cb6b-40d6-9488-24af153e1afa
+
+      # 4、编译
+      - name: Build
+        run: dotnet build SIASUN.RCS.slnx --no-restore
+
+      # 5、测试
+      - name: Test
+        run: dotnet test SIASUN.RCS.slnx --no-build
+
+      # 6、生成后端发布文件
+      - name: Publish Backend
+        run: dotnet publish src/SIASUN.RCS.HttpApi.Host/SIASUN.RCS.HttpApi.Host.csproj -c Release -o publish --no-restore
+
+      # 8. 保存后端构建产物
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rcs-backend-publish
+          path: RCS/BackEnd/publish
+          retention-days: 7
+          if-no-files-found: error
+
+      
+
+
+  # =========================
+  # 前端
+  # =========================
+  frontend:
+    name: FrontEnd Checks
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: RCS/FrontEnd
+
+    steps:
+
+      # 1、下载代码
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # 2、安装 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.9.0'
+
+      # 3、安装 Node
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: RCS/FrontEnd/pnpm-lock.yaml
+
+
+      # 4、安装前端依赖
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5、TypeScript 检查
+      - name: Type Check
+        run: pnpm typecheck
+
+      # 6、Lint
+      - name: Lint
+        run: pnpm oxlint
+
+      # 7、编译
+      - name: Build
+        run: pnpm run build
+      
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rcs-frontend-dist
+          path: RCS/FrontEnd/dist
+          retention-days: 7

@@ -1,10 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using System;
+using System.Threading.Tasks;
 
 namespace SIASUN.RCS;
 
@@ -31,6 +32,8 @@ public class Program
                         .ReadFrom.Services(services)
                         .WriteTo.Async(c => c.AbpStudio(services));
                 });
+            // 添加版本配置文件
+            builder.Configuration.AddJsonFile("Version.json", optional: true, reloadOnChange: true);
             await builder.AddApplicationAsync<RCSHttpApiHostModule>();
             var app = builder.Build();
             await app.InitializeApplicationAsync();

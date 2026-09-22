@@ -8,6 +8,7 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <RootNamespace>SIASUN.RCS</RootNamespace>
     <PreserveCompilationReferences>true</PreserveCompilationReferences>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'SIASUN.RCS.HttpApi.Host' " />
@@ -18,7 +19,7 @@
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</None>
     <PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
-    <PackageReference Include="KubernetesClient" Version="18.0.5"/>
+    <PackageReference Include="KubernetesClient" Version="18.0.5" />
     <PackageReference Include="IdentityModel" Version="7.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
@@ -29,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+		<None Update="Version.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
     <PackageReference Include="Volo.Abp.AspNetCore.MultiTenancy" Version="10.3.0" />
     <PackageReference Include="Volo.Abp.Autofac" Version="10.3.0" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="10.3.0" />
@@ -58,6 +63,16 @@
     <Content Remove="Logs\**" />
     <EmbeddedResource Remove="Logs\**" />
     <None Remove="Logs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Version.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Version.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

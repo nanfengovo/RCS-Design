@@ -1,44 +1,46 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi;
+using OpenIddict.Server.AspNetCore;
+using OpenIddict.Validation.AspNetCore;
+using SIASUN.RCS.Common;
+using SIASUN.RCS.EntityFrameworkCore;
+using SIASUN.RCS.HealthChecks;
+using SIASUN.RCS.MultiTenancy;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Extensions.DependencyInjection;
-using OpenIddict.Validation.AspNetCore;
-using OpenIddict.Server.AspNetCore;
-using SIASUN.RCS.EntityFrameworkCore;
-using SIASUN.RCS.MultiTenancy;
-using SIASUN.RCS.HealthChecks;
-using Microsoft.OpenApi;
 using Volo.Abp;
-using Volo.Abp.Studio;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
-using Volo.Abp.Autofac;
-using Volo.Abp.Localization;
-using Volo.Abp.Modularity;
-using Volo.Abp.UI.Navigation.Urls;
-using Volo.Abp.VirtualFileSystem;
 using Volo.Abp.AspNetCore.Mvc.UI.Bundling;
-using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
-using Microsoft.AspNetCore.Hosting;
+using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
+using Volo.Abp.Autofac;
 using Volo.Abp.Identity;
+using Volo.Abp.Localization;
+using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict;
-using Volo.Abp.Swashbuckle;
-using Volo.Abp.Studio.Client.AspNetCore;
 using Volo.Abp.Security.Claims;
+using Volo.Abp.Studio;
+using Volo.Abp.Studio.Client.AspNetCore;
+using Volo.Abp.Swashbuckle;
+using Volo.Abp.UI.Navigation.Urls;
+using Volo.Abp.VirtualFileSystem;
 
 namespace SIASUN.RCS;
 
@@ -89,6 +91,7 @@ public class RCSHttpApiHostModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
+        context.Services.Configure<AppVersionOptions>(configuration.GetSection(AppVersionOptions.SectionName));
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
         if (!configuration.GetValue<bool>("App:DisablePII"))
@@ -218,9 +221,42 @@ public class RCSHttpApiHostModule : AbpModule
             null,
             options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "RCS API", Version = "v1" });
-                options.DocInclusionPredicate((docName, description) => true);
+                options.SwaggerDoc("abp", new OpenApiInfo { Title = "ABP 框架内置API", Version = "v1", Description = "框架内置：应用配置、本地化、多租户探测等" });
+                options.SwaggerDoc("rcs", new OpenApiInfo { Title = "RCS 通用业务API", Version = "v1", Description = "RCS通用业务" });
+                options.SwaggerDoc("dashboard", new OpenApiInfo { Title = "Dashboard API", Version = "v1", Description = "仪表板 API" });
+                options.SwaggerDoc("common", new OpenApiInfo { Title = "通用 API", Version = "v1", Description = "通用 API" });
+                options.SwaggerDoc("all", new OpenApiInfo { Title = "all API", Version = "v1", Description = "所有API" });
+                // 按路径前缀过滤
+                options.DocInclusionPredicate((docName, description) =>
+                {
+                    if (!description.TryGetMethodInfo(out var method))
+                        return docName == "all";
+                    var asm = method.DeclaringType?.Assembly.GetName().Name ?? "";
+                    var isAbp = asm.StartsWith("Volo.Abp", StringComparison.OrdinalIgnoreCase);
+                    var isRcs = asm.StartsWith("SIASUN.RCS", StringComparison.OrdinalIgnoreCase);
+                    var group = description.GroupName; // 业务侧可选 [ApiExplorerSettings(GroupName=...)]
+                    return docName switch
+                    {
+                        "abp" => isAbp,
+                        "rcs" => isRcs,
+                        "dashboard" => group == "dashboard",
+                        "common" => group == "common",
+                        "all" => true,
+                        _ => false
+                    };
+                });
                 options.CustomSchemaIds(type => type.FullName);
+
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, "SIASUN.RCS.HttpApi.xml");
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                }
+
+                // 若业务注释写在 Application / Application.Contracts，也要一并 Include
+                var appXml = Path.Combine(AppContext.BaseDirectory, "SIASUN.RCS.Application.xml");
+                if (File.Exists(appXml))
+                    options.IncludeXmlComments(appXml);
             });
     }
 
@@ -291,7 +327,11 @@ public class RCSHttpApiHostModule : AbpModule
         app.UseSwagger();
         app.UseAbpSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "RCS API");
+            options.SwaggerEndpoint("/swagger/abp/swagger.json", "ABP API");
+            options.SwaggerEndpoint("/swagger/rcs/swagger.json", "RCS API");
+            options.SwaggerEndpoint("/swagger/dashboard/swagger.json", "Dashboard API");
+            options.SwaggerEndpoint("/swagger/all/swagger.json", "All API");
+            options.SwaggerEndpoint("/swagger/common/swagger.json", "Common API");
 
             var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
             options.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);

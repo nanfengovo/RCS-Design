@@ -1,0 +1,9 @@
+{
+  "version": {
+    "BackEndVersion": "0.0.0",
+    "FrontEndVersion": "0.0.0",
+    "BackEndBuild": "20260921.0",
+    "FrontEndBuild": "20260921.0",
+    "Channel": "dev"
+  }
+}
