@@ -215,7 +215,6 @@ public class RCSHttpApiHostModule : AbpModule
 
     private static void ConfigureSwagger(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        _ = SwaggerDocStore.Instance;
         context.Services.AddAbpSwaggerGenWithOidc(
             configuration["AuthServer:Authority"]!,
             ["RCS"],
@@ -223,6 +222,7 @@ public class RCSHttpApiHostModule : AbpModule
             null,
             options =>
             {
+                options.OperationFilter<SwaggerDocOperationFilter>();
                 options.SwaggerDoc("abp", new OpenApiInfo { Title = "ABP 框架内置API", Version = "v1", Description = "框架内置：应用配置、本地化、多租户探测等" });
                 options.SwaggerDoc("rcs", new OpenApiInfo { Title = "RCS 通用业务API", Version = "v1", Description = "RCS通用业务" });
                 options.SwaggerDoc("dashboard", new OpenApiInfo { Title = "Dashboard API", Version = "v1", Description = "仪表板 API" });

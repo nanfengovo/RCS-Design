@@ -12,16 +12,16 @@ namespace SIASUN.RCS.Swagger
     /// </summary>
     public class SwaggerDocStore
     {
-        /// <summary>
-        /// 整个进程只有一个Store,单例写法
-        /// </summary>
-        public static SwaggerDocStore Instance { get; } = new();
-
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             // 忽略大小写
             PropertyNameCaseInsensitive = true,
         };
+
+        /// <summary>
+        /// 整个进程只有一个Store,单例写法
+        /// </summary>
+        public static SwaggerDocStore Instance { get; } = new();
 
         /// <summary>
         /// 存 json
@@ -60,7 +60,39 @@ namespace SIASUN.RCS.Swagger
             }
         }
 
+        /// <summary>
+        /// 尝试获取接口文档
+        /// </summary>
+        /// <param name="method">方法类型</param>
+        /// <param name="path">请求路径</param>
+        /// <param name="doc">输出的接口文档</param>
+        /// <returns></returns>
+        public bool TryGet(string? method, string? path, out ApiDoc? doc)
+        {
+            doc = null;
+            if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(path))
+                return false;
 
+            if(_model!.Operations is null || _model.Operations.Count == 0)
+                return false;
+            var key = NormalizeKey(method, path);
+
+            return _model.Operations.TryGetValue(key, out doc);
+        }
+
+        /// <summary>
+        /// 统一方法和接口的格式
+        /// </summary>
+        /// <param name="httpMethod">方法</param>
+        /// <param name="relativePath">接口路径</param>
+        /// <returns></returns>
+        public static string NormalizeKey(string httpMethod, string relativePath)
+        {
+            var path = relativePath.Split('?', 2)[0].Trim().TrimEnd('/');
+            if (!path.StartsWith('/'))
+                path = "/" + path;
+            return $"{httpMethod.Trim().ToUpperInvariant()} {path}";
+        }
 
     }
 }
