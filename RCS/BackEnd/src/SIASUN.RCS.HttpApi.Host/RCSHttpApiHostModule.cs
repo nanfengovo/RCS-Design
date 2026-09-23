@@ -235,12 +235,11 @@ public class RCSHttpApiHostModule : AbpModule
                         return docName == "all";
                     var asm = method.DeclaringType?.Assembly.GetName().Name ?? "";
                     var isAbp = asm.StartsWith("Volo.Abp", StringComparison.OrdinalIgnoreCase);
-                    var isRcs = asm.StartsWith("SIASUN.RCS", StringComparison.OrdinalIgnoreCase);
                     var group = description.GroupName; // 业务侧可选 [ApiExplorerSettings(GroupName=...)]
                     return docName switch
                     {
                         "abp" => isAbp,
-                        "rcs" => isRcs,
+                        "rcs" =>group == "rcs",
                         "dashboard" => group == "dashboard",
                         "common" => group == "common",
                         "all" => true,
