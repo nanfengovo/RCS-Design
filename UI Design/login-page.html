@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登录 · NXP RCS · AMHS CONTROL</title>
+  <style>
+    :root {
+      --bg: oklch(97.2% 0.008 220);
+      --bg-hex: #f0f7f9;
+      --surface: oklch(100% 0 0);
+      --fg: oklch(25% 0 0);
+      --muted: oklch(55% 0.012 220);
+      --border: oklch(90% 0.01 220);
+      --accent: oklch(70% 0.12 180);
+      --accent-hex: #15b7a8;
+      --accent-end: #10a6e6;
+      --accent-press: #0e8f84;
+      --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+      --on-accent: #ffffff;
+      --grid-line: color-mix(in oklch, var(--accent) 8%, transparent);
+      --card-shadow: 0 8px 28px rgb(0 20 40 / 0.08);
+      --radius: 8px;
+      --radius-card: 16px;
+      --font-display: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      --font-body: "Segoe UI", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+      --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+      color-scheme: light;
+    }
+    html.dark {
+      --bg: oklch(22% 0.005 240);
+      --bg-hex: #1b1b1b;
+      --surface: oklch(24% 0.005 240);
+      --fg: oklch(93% 0 0);
+      --muted: oklch(68% 0.01 220);
+      --border: oklch(35% 0.01 240);
+      --grid-line: color-mix(in oklch, var(--accent) 14%, transparent);
+      --card-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--fg);
+      background: var(--bg-hex);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    img { display: block; max-width: 100%; height: auto; }
+    :focus-visible { outline: 2px solid var(--accent-hex); outline-offset: 2px; }
+
+    .login {
+      min-height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        var(--bg-hex);
+      background-size: 48px 48px, 48px 48px, auto;
+    }
+
+    .pane-visual {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+      padding: clamp(28px, 5vw, 64px);
+      min-width: 0;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--accent-hex);
+      border: 1px solid color-mix(in oklch, var(--accent) 45%, var(--border));
+      background: color-mix(in oklch, var(--accent) 8%, transparent);
+      border-radius: 999px;
+      padding: 4px 10px;
+      line-height: 1.4;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-hex);
+    }
+    .headline {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.4vw, 44px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+      max-width: 14em;
+    }
+    .lead {
+      margin: 0;
+      max-width: 42ch;
+      font-size: 14px;
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
+    .hero-wrap {
+      --hero-bg: #e8eef2;
+      margin-top: 8px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--hero-bg);
+      border: 1px solid var(--border);
+      box-shadow: var(--card-shadow);
+      position: relative;
+      aspect-ratio: 16 / 9;
+      isolation: isolate;
+    }
+    html.dark .hero-wrap {
+      --hero-bg: #171a1f;
+    }
+    .hero-reel {
+      position: absolute;
+      inset: 0;
+      background: var(--hero-bg);
+    }
+    .hero-reel[data-theme="dark"] { display: none; }
+    html.dark .hero-reel[data-theme="light"] { display: none; }
+    html.dark .hero-reel[data-theme="dark"] { display: block; }
+    .hero-reel img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      pointer-events: none;
+    }
+    .hero-reel .hero-loop { display: block; opacity: 1; }
+    .hero-reel .hero-static { display: none; opacity: 1; }
+    .hero-wrap.is-reduced .hero-loop { display: none; }
+    .hero-wrap.is-reduced .hero-static { display: block; }
+    .hero-caption {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      z-index: 2;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: color-mix(in srgb, var(--accent-hex) 80%, var(--muted));
+      background: color-mix(in srgb, var(--hero-bg) 72%, transparent);
+      border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+      border-radius: 999px;
+      padding: 3px 8px;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+    }
+
+    .pane-form {
+      display: grid;
+      place-items: center;
+      padding: clamp(24px, 4vw, 48px);
+      position: relative;
+      background: color-mix(in oklch, var(--surface) 55%, transparent);
+      border-left: 1px solid var(--border);
+    }
+    html:not(.dark) .pane-form {
+      background: var(--surface);
+    }
+
+    .login-card {
+      width: min(400px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--card-shadow);
+      padding: 28px 28px 30px;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .brand-lock {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-lock img {
+      height: 28px;
+      width: auto;
+      max-width: 220px;
+      object-fit: contain;
+    }
+    html.dark .brand-lock img {
+      filter: brightness(1.35) saturate(1.05);
+    }
+    .brand-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex: none;
+    }
+    .utils {
+      display: flex;
+      gap: 4px;
+      flex: none;
+    }
+    .ghost {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      background: transparent;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+    }
+    .ghost:hover {
+      background: var(--accent-soft);
+      color: var(--fg);
+    }
+
+    .product-line {
+      margin: 0 0 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-hex);
+    }
+    .form-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .form-desc {
+      margin: 8px 0 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: color-mix(in oklch, var(--bg) 55%, var(--surface));
+      margin-bottom: 12px;
+    }
+    .field:focus-within {
+      border-color: var(--accent-hex);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .field svg { flex: none; color: var(--accent-hex); }
+    .field input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      height: 100%;
+    }
+    .field .eye {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px;
+      display: grid;
+      place-items: center;
+    }
+    .field .eye:hover { color: var(--fg); }
+
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 4px 0 18px;
+      font-size: 13px;
+    }
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      user-select: none;
+    }
+    .remember input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-hex);
+    }
+    .link {
+      color: var(--accent-hex);
+      text-decoration: none;
+      background: none;
+      border: 0;
+      padding: 0;
+      font-size: 13px;
+    }
+    .link:hover {
+      color: color-mix(in oklch, var(--accent) 80%, var(--fg));
+      text-decoration: underline;
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 48px;
+      border: 0;
+      border-radius: 999px;
+      color: var(--on-accent);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, var(--accent-hex), var(--accent-end));
+      box-shadow: 0 6px 18px color-mix(in oklch, var(--accent) 28%, transparent);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(90deg, var(--accent-press), color-mix(in oklch, var(--accent-end) 85%, black));
+      color: var(--on-accent);
+    }
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-secondary {
+      height: 40px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      font-size: 13px;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent-hex);
+      background: var(--accent-soft);
+      color: var(--fg);
+    }
+    .btn-secondary[aria-pressed="true"] {
+      border-color: var(--accent-hex);
+      color: var(--accent-hex);
+      background: var(--accent-soft);
+    }
+
+    .demo-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .demo {
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--border));
+      background: transparent;
+      color: var(--accent-hex);
+      font-size: 12px;
+    }
+    .demo:hover {
+      background: var(--accent-soft);
+      color: var(--accent-hex);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .foot-note {
+      margin: 18px 0 0;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+
+    .panel[hidden] { display: none !important; }
+
+    @media (max-width: 920px) {
+      .login {
+        grid-template-columns: 1fr;
+        background-size: 40px 40px, 40px 40px, auto;
+      }
+      .pane-form {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+      .pane-visual { padding-bottom: 12px; }
+      .headline { font-size: 28px; }
+      .hero-wrap { max-height: 240px; aspect-ratio: 16 / 10; }
+    }
+  </style>
+</head>
+<body>
+  <main class="login" data-od-id="login-shell" id="login-shell">
+    <section class="pane-visual" data-od-id="login-visual" aria-label="产品叙事">
+      <p class="eyebrow" data-od-id="login-eyebrow">NXP RCS · AMHS CONTROL</p>
+      <h1 class="headline" data-od-id="login-headline">半导体厂内<br />智能搬运调度</h1>
+      <p class="lead" data-od-id="login-lead">
+        RCS 统筹 AMA 派工、TM 任务与 AMR/AGV 协同，保障洁净室物料搬运闭环。本系统部署于厂内网，仅授权账号可进入调度控制台。
+      </p>
+      <div class="tag-row" data-od-id="login-tags-top" aria-label="系统能力">
+        <span class="tag">AMHS</span>
+        <span class="tag">OHT</span>
+        <span class="tag">AMR</span>
+      </div>
+      <div class="hero-wrap" data-od-id="login-hero" role="img" aria-label="洁净室 AMHS 场景动画：原稿裁切后低形变多帧推算并平滑循环">
+        <div class="hero-reel" data-theme="light" data-od-id="hero-reel-light">
+          <img class="hero-loop" src="assets/hero-light-loop.webp" width="1280" height="720" alt="" />
+          <img class="hero-static" src="assets/hero-light-f0.png" width="1280" height="720" alt="" />
+        </div>
+        <div class="hero-reel" data-theme="dark" data-od-id="hero-reel-dark">
+          <img class="hero-loop" src="assets/hero-dark-loop.webp" width="1280" height="720" alt="" />
+          <img class="hero-static" src="assets/hero-dark-f0.png" width="1280" height="720" alt="" />
+        </div>
+        <span class="hero-caption">LIVE · AMR PATROL</span>
+      </div>
+      <div class="tag-row" data-od-id="login-tags-bottom" aria-label="设备类型">
+        <span class="tag">STK</span>
+        <span class="tag">E-Pass</span>
+        <span class="tag">ERACK</span>
+        <span class="tag">AMR</span>
+      </div>
+    </section>
+
+    <section class="pane-form" data-od-id="login-form-pane" aria-label="登录">
+      <div class="login-card" data-od-id="login-card">
+        <div class="card-top">
+          <div class="brand-lock" data-od-id="login-brands">
+            <img src="assets/brand-row.png" width="550" height="70" alt="SIASUN 新松 与 DUCO 多可" />
+          </div>
+          <div class="utils">
+            <button type="button" class="ghost" id="btn-lang" title="语言" aria-label="切换语言">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3c2.5 3 3.5 6 3.5 9s-1 6-3.5 9c-2.5-3-3.5-6-3.5-9s1-6 3.5-9z" />
+              </svg>
+            </button>
+            <button type="button" class="ghost" id="btn-theme" title="明暗" aria-label="切换明暗主题">
+              <svg id="icon-theme" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="product-line" data-od-id="login-product-line">NXP RCS · AMHS CONTROL</p>
+
+        <div class="panel" id="panel-pwd" data-od-id="panel-password">
+          <h2 class="form-title" data-od-id="login-form-title">密码登录</h2>
+          <p class="form-desc">洁净室 AMHS 物料搬运调度控制台，请使用授权账号登录。</p>
+          <label class="field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="4"/></svg>
+            <input id="username" name="username" autocomplete="username" placeholder="账号" value="admin" />
+          </label>
+          <label class="field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="密码" value="123456" />
+            <button type="button" class="eye" id="toggle-pwd" aria-label="显示密码">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </label>
+          <div class="row-between">
+            <label class="remember"><input type="checkbox" id="remember" checked /> 记住我</label>
+            <button type="button" class="link" data-go="reset">忘记密码?</button>
+          </div>
+          <button type="button" class="btn-primary" data-od-id="login-cta" id="btn-login">登陆 RCS 系统</button>
+        </div>
+
+        <div class="panel" id="panel-code" hidden data-od-id="panel-code">
+          <h2 class="form-title">验证码登录</h2>
+          <p class="form-desc">内网短信或厂内消息通道下发验证码，仅限授权手机号。</p>
+          <label class="field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+            <input id="phone" placeholder="手机号" inputmode="tel" />
+          </label>
+          <label class="field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
+            <input id="sms" placeholder="验证码" />
+            <button type="button" class="link" id="btn-sms" style="flex:none">获取验证码</button>
+          </label>
+          <button type="button" class="btn-primary" id="btn-login-code">登陆 RCS 系统</button>
+          <div class="mode-row">
+            <button type="button" class="btn-secondary" data-go="pwd" aria-pressed="false">密码登录</button>
+            <button type="button" class="btn-secondary" data-go="register" aria-pressed="false">注册账号</button>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-register" hidden data-od-id="panel-register">
+          <h2 class="form-title">注册账号</h2>
+          <p class="form-desc">厂内账号由管理员开通。此入口仅用于联调演示。</p>
+          <label class="field"><input id="reg-user" placeholder="账号" /></label>
+          <label class="field"><input id="reg-pwd" type="password" placeholder="密码" /></label>
+          <label class="field"><input id="reg-pwd2" type="password" placeholder="确认密码" /></label>
+          <button type="button" class="btn-primary" id="btn-register">提交注册</button>
+          <div class="mode-row">
+            <button type="button" class="btn-secondary" data-go="pwd">返回登录</button>
+            <button type="button" class="btn-secondary" data-go="code">验证码登录</button>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-reset" hidden data-od-id="panel-reset">
+          <h2 class="form-title">重置密码</h2>
+          <p class="form-desc">通过授权手机号重置。生产环境请走厂内 IT 流程。</p>
+          <label class="field"><input id="reset-phone" placeholder="手机号" inputmode="tel" /></label>
+          <label class="field"><input id="reset-code" placeholder="验证码" /></label>
+          <label class="field"><input id="reset-pwd" type="password" placeholder="新密码" /></label>
+          <button type="button" class="btn-primary" id="btn-reset">确认重置</button>
+          <div class="mode-row">
+            <button type="button" class="btn-secondary" data-go="pwd">返回登录</button>
+          </div>
+        </div>
+
+        <p class="foot-note">INTRANET · AUTHORIZED ACCESS ONLY</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var KEY = "nxp-rcs-login-theme";
+      var saved = localStorage.getItem(KEY);
+      if (saved === "light") root.classList.remove("dark");
+      else root.classList.add("dark");
+
+      function setTheme(dark) {
+        root.classList.toggle("dark", dark);
+        localStorage.setItem(KEY, dark ? "dark" : "light");
+        var icon = document.getElementById("icon-theme");
+        if (!icon) return;
+        if (dark) {
+          icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+        } else {
+          icon.innerHTML = '<path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z"/>';
+        }
+      }
+      setTheme(root.classList.contains("dark"));
+
+      document.getElementById("btn-theme").addEventListener("click", function () {
+        setTheme(!root.classList.contains("dark"));
+      });
+
+      /* Hero: animated WebP (45-frame low-warp ping-pong); static f0 if reduced motion */
+      (function initHeroFrames() {
+        var wrap = document.querySelector(".hero-wrap");
+        if (!wrap) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          wrap.classList.add("is-reduced");
+        }
+      })();
+
+      var panels = {
+        pwd: document.getElementById("panel-pwd"),
+        code: document.getElementById("panel-code"),
+        register: document.getElementById("panel-register"),
+        reset: document.getElementById("panel-reset")
+      };
+      function show(name) {
+        Object.keys(panels).forEach(function (k) {
+          panels[k].hidden = k !== name;
+        });
+      }
+      document.querySelectorAll("[data-go]").forEach(function (el) {
+        el.addEventListener("click", function () {
+          show(el.getAttribute("data-go"));
+        });
+      });
+
+      var pwd = document.getElementById("password");
+      document.getElementById("toggle-pwd").addEventListener("click", function () {
+        pwd.type = pwd.type === "password" ? "text" : "password";
+      });
+
+      var smsBtn = document.getElementById("btn-sms");
+      var left = 0;
+      var timer = null;
+      smsBtn.addEventListener("click", function () {
+        if (left > 0) return;
+        left = 60;
+        smsBtn.textContent = left + "s";
+        timer = setInterval(function () {
+          left -= 1;
+          if (left <= 0) {
+            clearInterval(timer);
+            smsBtn.textContent = "获取验证码";
+          } else {
+            smsBtn.textContent = left + "s";
+          }
+        }, 1000);
+      });
+
+      function toast(msg) {
+        var t = document.createElement("div");
+        t.textContent = msg;
+        t.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:color-mix(in oklch, var(--fg) 88%, transparent);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:13px;z-index:20";
+        document.body.appendChild(t);
+        setTimeout(function () { t.remove(); }, 1600);
+      }
+      document.getElementById("btn-login").addEventListener("click", function () { toast("已校验账号（演示）"); });
+      document.getElementById("btn-login-code").addEventListener("click", function () { toast("验证码登录（演示）"); });
+      document.getElementById("btn-register").addEventListener("click", function () { toast("注册已提交（演示）"); });
+      document.getElementById("btn-reset").addEventListener("click", function () { toast("重置已提交（演示）"); });
+    })();
+  </script>
+</body>
+</html>

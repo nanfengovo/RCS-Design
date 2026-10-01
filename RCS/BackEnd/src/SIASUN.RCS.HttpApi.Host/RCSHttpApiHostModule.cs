@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using OpenIddict.Server;
 using OpenIddict.Server.AspNetCore;
 using OpenIddict.Validation.AspNetCore;
 using SIASUN.RCS.Common;
@@ -26,6 +27,7 @@ using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 using Volo.Abp.AspNetCore.Mvc.UI.Bundling;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
@@ -74,6 +76,35 @@ public class RCSHttpApiHostModule : AbpModule
             });
         });
 
+        var swaggerClientId = configuration["AuthServer:SwaggerClientId"];
+        PreConfigure<OpenIddictServerBuilder>(builder =>
+        {
+            builder.AddEventHandler<OpenIddictServerEvents.ExtractTokenRequestContext>(b =>
+            {
+                b.UseInlineHandler(context =>
+                {
+                    var request = context.Request;
+                    if (request is null || !string.IsNullOrEmpty(request.ClientId))
+                    {
+                        return default;
+                    }
+
+                    var redirectUri = request.RedirectUri;
+                    if (string.IsNullOrEmpty(swaggerClientId) ||
+                        redirectUri is null ||
+                        !redirectUri.Contains("/swagger/oauth2-redirect.html", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return default;
+                    }
+
+                    request.ClientId = swaggerClientId;
+                    return default;
+                });
+
+                b.SetOrder(100_000);
+            });
+        });
+
         if (!hostingEnvironment.IsDevelopment())
         {
             PreConfigure<AbpOpenIddictAspNetCoreOptions>(options =>
@@ -93,6 +124,10 @@ public class RCSHttpApiHostModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<AppVersionOptions>(configuration.GetSection(AppVersionOptions.SectionName));
+        Configure<AbpAntiForgeryOptions>(options =>
+        {
+            options.AutoValidate = false;
+        });
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
         if (!configuration.GetValue<bool>("App:DisablePII"))
@@ -326,6 +361,7 @@ public class RCSHttpApiHostModule : AbpModule
         app.UseAuthorization();
 
         app.UseSwagger();
+
         app.UseAbpSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/abp/swagger.json", "ABP API");
@@ -335,7 +371,27 @@ public class RCSHttpApiHostModule : AbpModule
             options.SwaggerEndpoint("/swagger/common/swagger.json", "Common API");
 
             var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
-            options.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
+            var swaggerClientId = configuration["AuthServer:SwaggerClientId"];
+            options.OAuthClientId(swaggerClientId);
+            options.OAuthScopes("RCS");
+            options.OAuthUsePkce();
+            // Swagger UI 的 OIDC 换 token 请求不会带上 client_id，OpenIddict 会因此返回 ID2029。
+            options.UseRequestInterceptor(
+                $$"""
+                (req) => {
+                  const url = req.url || "";
+                  if (!url.includes("/connect/token")) return req;
+                  const id = "{{swaggerClientId}}";
+                  if (req.body && typeof req.body.append === "function") {
+                    req.body.append("client_id", id);
+                    return req;
+                  }
+                  if (typeof req.body === "string" && !req.body.includes("client_id=")) {
+                    req.body += (req.body ? "&" : "") + "client_id=" + encodeURIComponent(id);
+                  }
+                  return req;
+                }
+                """);
         });
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
