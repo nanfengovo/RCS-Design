@@ -1,5 +1,4 @@
-﻿using Grpc.Net.Client.Balancer;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -30,11 +29,17 @@ namespace SIASUN.RCS.Swagger
         private readonly SwaggerModel? _model;
 
         /// <summary>
+        /// Tag 说明（只读）
+        /// </summary>
+        public IReadOnlyDictionary<string, TagDoc> Tags =>
+            _model?.Tags ?? new Dictionary<string, TagDoc>();
+
+        /// <summary>
         /// 赋值
         /// </summary>
         private SwaggerDocStore()
         {
-            _model = Load();    
+            _model = Load();
         }
 
         /// <summary>
@@ -45,18 +50,30 @@ namespace SIASUN.RCS.Swagger
         {
             var path = Path.Combine(AppContext.BaseDirectory, "Swagger", "SwaggerDoc.json");
             if (!File.Exists(path))
-                return new SwaggerModel { Operations = new Dictionary<string, ApiDoc>() };
+                return new SwaggerModel
+                {
+                    Tags = new Dictionary<string, TagDoc>(),
+                    Operations = new Dictionary<string, ApiDoc>()
+                };
 
             try
             {
-                var json = File.ReadAllText(path,Encoding.UTF8);
+                var json = File.ReadAllText(path, Encoding.UTF8);
                 return JsonSerializer.Deserialize<SwaggerModel>(json, JsonOptions)
-                ?? new SwaggerModel { Operations = new Dictionary<string, ApiDoc>() };
+                    ?? new SwaggerModel
+                    {
+                        Tags = new Dictionary<string, TagDoc>(),
+                        Operations = new Dictionary<string, ApiDoc>()
+                    };
             }
             catch
             {
                 // MVP：别让启动崩；以后可加 ILogger
-                return new SwaggerModel { Operations = new Dictionary<string, ApiDoc>() };
+                return new SwaggerModel
+                {
+                    Tags = new Dictionary<string, TagDoc>(),
+                    Operations = new Dictionary<string, ApiDoc>()
+                };
             }
         }
 
@@ -73,7 +90,7 @@ namespace SIASUN.RCS.Swagger
             if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(path))
                 return false;
 
-            if(_model!.Operations is null || _model.Operations.Count == 0)
+            if (_model!.Operations is null || _model.Operations.Count == 0)
                 return false;
             var key = NormalizeKey(method, path);
 

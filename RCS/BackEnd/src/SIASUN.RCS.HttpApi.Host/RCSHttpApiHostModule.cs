@@ -258,6 +258,7 @@ public class RCSHttpApiHostModule : AbpModule
             options =>
             {
                 options.OperationFilter<SwaggerDocOperationFilter>();
+                options.DocumentFilter<SwaggerDocDocumentFilter>();
                 options.SwaggerDoc("abp", new OpenApiInfo { Title = "ABP 框架内置API", Version = "v1", Description = "框架内置：应用配置、本地化、多租户探测等" });
                 options.SwaggerDoc("rcs", new OpenApiInfo { Title = "RCS 通用业务API", Version = "v1", Description = "RCS通用业务" });
                 options.SwaggerDoc("dashboard", new OpenApiInfo { Title = "Dashboard API", Version = "v1", Description = "仪表板 API" });
@@ -377,21 +378,7 @@ public class RCSHttpApiHostModule : AbpModule
             options.OAuthUsePkce();
             // Swagger UI 的 OIDC 换 token 请求不会带上 client_id，OpenIddict 会因此返回 ID2029。
             options.UseRequestInterceptor(
-                $$"""
-                (req) => {
-                  const url = req.url || "";
-                  if (!url.includes("/connect/token")) return req;
-                  const id = "{{swaggerClientId}}";
-                  if (req.body && typeof req.body.append === "function") {
-                    req.body.append("client_id", id);
-                    return req;
-                  }
-                  if (typeof req.body === "string" && !req.body.includes("client_id=")) {
-                    req.body += (req.body ? "&" : "") + "client_id=" + encodeURIComponent(id);
-                  }
-                  return req;
-                }
-                """);
+    "(req) => { const url = req.url || ''; if (!url.includes('/connect/token')) return req; const id = '" + swaggerClientId + "'; if (req.body && typeof req.body.append === 'function') { req.body.append('client_id', id); return req; } if (typeof req.body === 'string' && req.body.indexOf('client_id=') < 0) { req.body += (req.body ? '&' : '') + 'client_id=' + encodeURIComponent(id); } return req; }");
         });
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();

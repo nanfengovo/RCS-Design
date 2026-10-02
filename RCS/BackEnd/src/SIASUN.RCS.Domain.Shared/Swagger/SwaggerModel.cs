@@ -11,9 +11,30 @@ namespace SIASUN.RCS.Swagger
     public class SwaggerModel
     {
         /// <summary>
+        /// Swagger Tag（分组标题）说明，键为 Tag 名，如 AbpApiDefinition。
+        /// </summary>
+        public Dictionary<string, TagDoc>? Tags { get; set; }
+
+        /// <summary>
         /// 存到内存里
         /// </summary>
-        public  Dictionary<string, ApiDoc>? Operations { get; set; }
+        public Dictionary<string, ApiDoc>? Operations { get; set; }
+    }
+
+    /// <summary>
+    /// Swagger 分组（Tag）文档
+    /// </summary>
+    public class TagDoc
+    {
+        /// <summary>
+        /// 显示名 / 短标题（可选，不填则沿用 Tag 名）
+        /// </summary>
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// 分组说明，显示在 Swagger UI 标题旁
+        /// </summary>
+        public string? Description { get; set; }
     }
 
     /// <summary>

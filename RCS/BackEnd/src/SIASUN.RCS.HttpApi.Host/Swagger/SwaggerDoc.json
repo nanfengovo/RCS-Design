@@ -1,17 +1,251 @@
 {
+  "tags": {
+    "AbpApiDefinition": {
+      "name": "AbpApiDefinition",
+      "description": "ABP 内置 · API 定义：暴露 /api/abp/api-definition，返回服务端 HTTP API 契约模型，供 generate-proxy / 动态客户端使用（非 OpenAPI）。"
+    },
+    "AbpApplicationConfiguration": {
+      "name": "AbpApplicationConfiguration",
+      "description": "ABP 内置 · 应用配置：暴露 /api/abp/application-configuration，向前端提供当前用户、权限、Setting、Feature、租户与时区等运行时 Config State。"
+    },
+    "AbpApplicationLocalization": {
+      "name": "AbpApplicationLocalization",
+      "description": "ABP 内置 · 应用本地化：按 cultureName 返回本地化资源与文案，供 SPA 多语言；可与 application-configuration 的本地化字段分工使用。"
+    },
+    "AbpTenant": {
+      "name": "AbpTenant",
+      "description": "ABP 内置 · 多租户解析：按租户名或 Id 解析租户是否存在，供登录页/网关设置当前租户（__tenant）。"
+    },
+    "Account": {
+      "name": "Account",
+      "description": "Account 账号模块：用户自助注册、忘记密码（发码/校验/重置）。登录会话见 Login；资料见 Profile。"
+    },
+    "Login": {
+      "name": "Login",
+      "description": "Account · 登录会话：Cookie/会话方式的登录、登出与验密。前后端分离拿 Bearer 请优先使用 /connect/token。"
+    },
+    "Profile": {
+      "name": "Profile",
+      "description": "Account · 个人资料：当前登录用户查看/更新资料与修改密码。"
+    },
+    "DynamicClaims": {
+      "name": "DynamicClaims",
+      "description": "Account · 动态声明：权限/角色变更后刷新当前主体的动态 Claims，使授权立即生效而无需完整重新登录。"
+    },
+    "Features": {
+      "name": "Features",
+      "description": "FeatureManagement · 功能管理：按 Provider（租户/版本等）查询、更新或清除 Feature 开关与取值。"
+    },
+    "Permissions": {
+      "name": "Permissions",
+      "description": "PermissionManagement · 权限管理：按角色/用户等 Provider 管理权限授予，以及资源级（实体实例）授权相关接口。"
+    },
+    "EmailSettings": {
+      "name": "EmailSettings",
+      "description": "SettingManagement · 邮件设置：读写 SMTP/发件人配置，并可发送测试邮件验证连通性。"
+    },
+    "TimeZoneSettings": {
+      "name": "TimeZoneSettings",
+      "description": "SettingManagement · 时区：读取/更新应用时区 Setting，以及可选时区列表。"
+    },
+    "Role": {
+      "name": "Role",
+      "description": "Identity · 角色：角色的分页查询、增删改及全量列表，供角色管理与用户分配角色。"
+    },
+    "User": {
+      "name": "User",
+      "description": "Identity · 用户：用户 CRUD、按用户名/邮箱查询、分配角色等用户管理接口。"
+    },
+    "UserLookup": {
+      "name": "UserLookup",
+      "description": "Identity · 用户查找：轻量用户查询/搜索/计数，供选人控件、跨模块引用，不替代完整用户管理 API。"
+    },
+    "Tenant": {
+      "name": "Tenant",
+      "description": "TenantManagement · 租户：Host 侧租户 CRUD，以及租户默认连接字符串的读写删除（独立库场景）。"
+    }
+  },
   "operations": {
+    "GET /api/abp/api-definition": {
+      "summary": "获取 API 定义模型",
+      "description": "**模块：** ABP 内置 · API 定义（Swagger Tag：`AbpApiDefinition`）\n\n**接口名：** `GET /api/abp/api-definition`\n\n**作用**\n\n返回当前应用暴露的 HTTP API 契约（ApplicationApiDescriptionModel），供 ABP CLI generate-proxy、动态 C# 客户端代理、前端对齐路由/参数/DTO 使用。不是 OpenAPI/Swagger JSON。\n\n**参数说明**\n\n- `includeTypes`（bool，默认 false）：为 true 时填充 `types`（DTO/枚举属性与校验元数据）。\n- `includeDescriptions`（bool，默认 false）：为 true 时尽量带上 XML 注释中的 Summary/Description。\n\n**含义**\n\n响应顶层含 `modules`（按模块 rootPath，如 app/identity，含 controller、action、url、httpMethod、参数）与可选的 `types`。CLI 的 `-m` 对应 modules 键，`-a` 对应 remoteServiceName。\n\n**什么情况下用**\n\n- 生成或更新 Angular/C#/JS 客户端代理时。\n- 使用动态 HTTP 客户端代理、运行时发现远端接口时。\n- 确认 Auto API 实际 URL/方法/参数绑定时。\n- 不要用本接口替代业务调用或 Swagger 人工文档。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/api-definition?includeTypes=true\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/api-definition?includeTypes=true HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "modules": {
+          "app": {
+            "rootPath": "app",
+            "remoteServiceName": "Default",
+            "controllers": {}
+          }
+        },
+        "types": {}
+      }
+    },
+    "GET /api/abp/application-configuration": {
+      "summary": "获取应用运行时配置",
+      "description": "**模块：** ABP 内置 · 应用配置（Swagger Tag：`AbpApplicationConfiguration`）\n\n**接口名：** `GET /api/abp/application-configuration`\n\n**作用**\n\n一次性返回前端启动所需的运行时配置：当前用户、已授权限、Setting、Feature、租户、时区，以及可选的本地化文案。是 SPA/官方 UI 的 Config State 数据源。\n\n**参数说明**\n\n- `includeLocalizationResources`（bool，默认 true）：是否填充 `localization.values` 大包文案。false 可显著减小体积，文案改走 application-localization。\n\n**含义**\n\n主要字段：`auth.grantedPolicies`、`currentUser`、`currentTenant`、`setting.values`、`features`、`localization`、`timing`/`clock`、`objectExtensions`、`extraProperties`。内容随登录身份与租户变化。\n\n**什么情况下用**\n\n- 前端启动或登录成功后初始化权限/用户/语言/Setting。\n- 控制菜单、按钮、路由是否可进。\n- 登出、换租户、改权限后应再拉一次。\n- 不要用来查 API 列表（用 api-definition）或做业务 CRUD。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/application-configuration?includeLocalizationResources=false\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/application-configuration?includeLocalizationResources=false HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "currentUser": {
+          "isAuthenticated": false,
+          "userName": null
+        },
+        "auth": {
+          "grantedPolicies": {}
+        },
+        "localization": {
+          "values": {}
+        },
+        "setting": {
+          "values": {}
+        },
+        "features": {
+          "values": {}
+        },
+        "currentTenant": {
+          "id": null,
+          "name": null,
+          "isAvailable": false
+        }
+      }
+    },
+    "GET /api/abp/application-localization": {
+      "summary": "按文化获取本地化文案",
+      "description": "**模块：** ABP 内置 · 应用本地化（Swagger Tag：`AbpApplicationLocalization`）\n\n**接口名：** `GET /api/abp/application-localization`\n\n**作用**\n\n按指定文化返回服务端已注册的本地化资源与文本，供前端多语言（如 L['Menu:Home']）。只负责翻译，不负责权限/用户。\n\n**参数说明**\n\n- `cultureName`（string，**必填**）：文化代码，如 `en`、`zh-Hans`。不传返回 400。\n- `onlyDynamics`（bool，默认 false）：true 时只返回动态本地化（库内覆盖）；静态 JSON 不返回。Blazor/MVC 已内嵌静态资源时可设 true。\n\n**含义**\n\n响应含 `currentCulture` 与 `resources`（资源名 → `{ texts, baseResources }`）。`texts` 为 key→译文；`baseResources` 为继承回退资源。\n\n**什么情况下用**\n\n- 自研 SPA 启动或切换语言时按 cultureName 拉文案。\n- 配置接口关本地化后，单独用本接口补文案。\n- 运维改了 Language Management 动态文案后用 onlyDynamics=true 增量刷新。\n- 不要替代 application-configuration 或业务 API。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/application-localization?cultureName=zh-Hans\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/application-localization?cultureName=zh-Hans HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "currentCulture": {
+          "cultureName": "zh-Hans"
+        },
+        "resources": {
+          "RCS": {
+            "texts": {
+              "Menu:Home": "首页",
+              "AppName": "RCS"
+            },
+            "baseResources": [
+              "AbpValidation",
+              "AbpUi"
+            ]
+          }
+        }
+      }
+    },
+    "GET /api/abp/multi-tenancy/tenants/by-id/{id}": {
+      "summary": "按租户 Id 解析租户",
+      "description": "**模块：** ABP 内置 · 多租户解析（Swagger Tag：`AbpTenant`）\n\n**接口名：** `GET /api/abp/multi-tenancy/tenants/by-id/{id}`\n\n**作用**\n\n根据租户 GUID 解析租户是否存在及名称等信息，供登录页/网关在仅有 Id 时识别当前租户。\n\n**参数说明**\n\n- `id`（path，Guid，必填）：租户 Id。\n\n**含义**\n\n返回租户解析结果（成功时含租户名等；找不到时按 ABP 多租户约定返回相应错误/空结果）。\n\n**什么情况下用**\n\n- 已知租户 Id、需要显示租户名或校验租户是否可用时。\n- 租户切换、深链带 tenant id 时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/multi-tenancy/tenants/by-id/{tenant-guid}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/multi-tenancy/tenants/by-id/{tenant-guid} HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "success": true,
+        "tenantId": "00000000-0000-0000-0000-000000000000",
+        "name": "acme",
+        "isActive": true
+      }
+    },
+    "GET /api/abp/multi-tenancy/tenants/by-name/{name}": {
+      "summary": "按租户名解析租户",
+      "description": "**模块：** ABP 内置 · 多租户解析（Swagger Tag：`AbpTenant`）\n\n**接口名：** `GET /api/abp/multi-tenancy/tenants/by-name/{name}`\n\n**作用**\n\n根据租户名称（唯一名）解析租户 Id 与状态，常用于登录页输入租户名后设置 `__tenant`。\n\n**参数说明**\n\n- `name`（path，string，必填）：租户名称。\n\n**含义**\n\n返回与 by-id 同类的租户解析结果。\n\n**什么情况下用**\n\n- 用户在登录页输入租户名时。\n- 子域名/路径解析出租户名后校验。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/multi-tenancy/tenants/by-name/acme\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/multi-tenancy/tenants/by-name/acme HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "success": true,
+        "tenantId": "00000000-0000-0000-0000-000000000000",
+        "name": "acme",
+        "isActive": true
+      }
+    },
+    "POST /api/account/check-password": {
+      "summary": "校验当前用户密码",
+      "description": "**模块：** Account · 登录会话（Swagger Tag：`Login`）\n\n**接口名：** `POST /api/account/check-password`\n\n**作用**\n\n在已登录前提下校验输入密码是否匹配当前用户，用于敏感操作二次确认（改邮箱、删数据前等）。\n\n**参数说明**\n\n- Body 含密码字段（与 Account 模块 CheckPassword DTO 一致，通常为 `password`）。\n\n**含义**\n\n密码正确则成功；错误返回业务/验证错误。\n\n**什么情况下用**\n\n- 敏感操作前二次验密。\n- 不要当作登录入口（登录用 login 或 /connect/token）。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/check-password -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"password\\\":\\\"***\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/check-password HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"password\": \"***\"\n}"
+        }
+      ],
+      "requestExample": {
+        "password": "***"
+      }
+    },
+    "POST /api/account/dynamic-claims/refresh": {
+      "summary": "刷新动态声明",
+      "description": "**模块：** Account · 动态声明（Swagger Tag：`DynamicClaims`）\n\n**接口名：** `POST /api/account/dynamic-claims/refresh`\n\n**作用**\n\n刷新当前主体的动态 Claims（权限变更、角色变更后让 Token/Claims 与服务端一致，无需重新登录拿全部静态 claim）。\n\n**参数说明**\n\n无业务 Body（依赖当前认证用户）。\n\n**含义**\n\n服务端更新动态声明缓存/cookie 侧声明；客户端之后请求将带上新声明。\n\n**什么情况下用**\n\n- 管理员刚改了当前用户角色/权限，前端需立刻生效时。\n- 启用了 ABP Dynamic Claims 的方案。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/dynamic-claims/refresh -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/dynamic-claims/refresh HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
     "POST /api/account/login": {
       "summary": "账号密码登录",
-      "description": "校验用户名/邮箱和密码，建立登录会话。前后端分离拿 Bearer 请另走 /connect/token。",
-      "requestExample": {
-        "userNameOrEmailAddress": "admin",
-        "password": "你的密码",
-        "rememberMe": true
-      },
-      "responseExample": {
-        "result": 1,
-        "description": "Success"
-      },
+      "description": "**模块：** Account · 登录会话（Swagger Tag：`Login`）\n\n**接口名：** `POST /api/account/login`\n\n**作用**\n\n用用户名/邮箱 + 密码建立 Cookie/会话登录。前后端分离拿 Bearer Token 应走 OpenIddict `/connect/token`，本接口主要用于 Cookie 会话或兼容宿主登录。\n\n**参数说明**\n\n- Body `userNameOrEmailAddress`（string）：用户名或邮箱。\n- Body `password`（string）：密码。\n- Body `rememberMe`（bool）：是否持久记住登录。\n\n**含义**\n\n返回登录结果枚举（如 Success）及描述；成功后服务端写入认证 Cookie。\n\n**什么情况下用**\n\n- MVC/Cookie 场景登录。\n- SPA 若用 Cookie 方案可调用；纯 Bearer 方案优先 /connect/token。",
       "callExamples": [
         {
           "title": "curl",
@@ -22,6 +256,1107 @@
           "title": "HTTP",
           "language": "http",
           "code": "POST /api/account/login HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userNameOrEmailAddress\": \"admin\",\n  \"password\": \"***\",\n  \"rememberMe\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "userNameOrEmailAddress": "admin",
+        "password": "你的密码",
+        "rememberMe": true
+      },
+      "responseExample": {
+        "result": 1,
+        "description": "Success"
+      }
+    },
+    "GET /api/account/logout": {
+      "summary": "退出登录",
+      "description": "**模块：** Account · 登录会话（Swagger Tag：`Login`）\n\n**接口名：** `GET /api/account/logout`\n\n**作用**\n\n结束当前登录会话（清除 Cookie/会话侧状态）。Bearer 客户端还需自行丢弃本地 Token。\n\n**参数说明**\n\n无业务参数（依赖当前认证上下文）。\n\n**含义**\n\n成功则当前会话失效。\n\n**什么情况下用**\n\n- 用户点击退出时。\n- Cookie 方案必须调；纯 Bearer 可只清前端 Token，调本接口可顺带清服务端会话相关状态。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X GET http://localhost:9000/api/account/logout -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/account/logout HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/account/my-profile": {
+      "summary": "获取当前用户资料",
+      "description": "**模块：** Account · 个人资料（Swagger Tag：`Profile`）\n\n**接口名：** `GET /api/account/my-profile`\n\n**作用**\n\n返回当前登录用户的个人资料（用户名、邮箱、姓名、电话等）。\n\n**参数说明**\n\n无业务参数（依赖 Authorization）。\n\n**含义**\n\nProfileDto：用户标识与可编辑资料字段。\n\n**什么情况下用**\n\n- 「我的资料」页加载时。\n- 顶栏展示当前用户信息时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/account/my-profile -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/account/my-profile HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": "admin",
+        "surname": null,
+        "phoneNumber": null
+      }
+    },
+    "PUT /api/account/my-profile": {
+      "summary": "更新当前用户资料",
+      "description": "**模块：** Account · 个人资料（Swagger Tag：`Profile`）\n\n**接口名：** `PUT /api/account/my-profile`\n\n**作用**\n\n更新当前登录用户可自助修改的资料字段。\n\n**参数说明**\n\n- Body：`userName`、`email`、`name`、`surname`、`phoneNumber` 等（以 UpdateProfileDto 为准）。\n\n**含义**\n\n返回更新后的资料。\n\n**什么情况下用**\n\n- 用户在个人中心保存资料时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/account/my-profile -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"admin\\\",\\\"email\\\":\\\"admin@example.com\\\",\\\"name\\\":\\\"Admin\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/account/my-profile HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"name\": \"Admin\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": "Admin",
+        "surname": "",
+        "phoneNumber": ""
+      }
+    },
+    "POST /api/account/my-profile/change-password": {
+      "summary": "修改当前用户密码",
+      "description": "**模块：** Account · 个人资料（Swagger Tag：`Profile`）\n\n**接口名：** `POST /api/account/my-profile/change-password`\n\n**作用**\n\n已登录用户修改自己的密码（需提供当前密码与新密码）。\n\n**参数说明**\n\n- Body：`currentPassword`、`newPassword`。\n\n**含义**\n\n成功后需用新密码登录；部分方案会使旧会话失效。\n\n**什么情况下用**\n\n- 「修改密码」页。\n- 忘记密码请走 reset-password 流程。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/my-profile/change-password -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"currentPassword\\\":\\\"***\\\",\\\"newPassword\\\":\\\"***\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/my-profile/change-password HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"currentPassword\": \"***\",\n  \"newPassword\": \"***\"\n}"
+        }
+      ],
+      "requestExample": {
+        "currentPassword": "旧密码",
+        "newPassword": "新密码"
+      }
+    },
+    "POST /api/account/register": {
+      "summary": "用户自助注册",
+      "description": "**模块：** Account 账号模块（Swagger Tag：`Account`）\n\n**接口名：** `POST /api/account/register`\n\n**作用**\n\n创建新用户账号（受 Account 模块「允许自注册」等 Setting/Feature 控制）。\n\n**参数说明**\n\n- Body：`userName`、`emailAddress`、`password`、`appName` 等（以实际 DTO 为准）。\n\n**含义**\n\n成功则创建用户；若需邮箱确认则按模块配置发送确认邮件。\n\n**什么情况下用**\n\n- 开放注册的门户/租户自助开通。\n- 关闭自注册时调用会失败，应改走管理员创建用户。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/register -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"demo\\\",\\\"emailAddress\\\":\\\"demo@example.com\\\",\\\"password\\\":\\\"1q2w3E*\\\",\\\"appName\\\":\\\"MVC\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/register HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userName\": \"demo\",\n  \"emailAddress\": \"demo@example.com\",\n  \"password\": \"1q2w3E*\",\n  \"appName\": \"MVC\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "demo",
+        "emailAddress": "demo@example.com",
+        "password": "1q2w3E*",
+        "appName": "MVC"
+      }
+    },
+    "POST /api/account/reset-password": {
+      "summary": "重置密码",
+      "description": "**模块：** Account 账号模块（Swagger Tag：`Account`）\n\n**接口名：** `POST /api/account/reset-password`\n\n**作用**\n\n在持有有效重置令牌的前提下设置新密码。\n\n**参数说明**\n\n- Body：`userId`、`resetToken`、`password`。\n\n**含义**\n\n成功后旧密码失效，可用新密码登录。\n\n**什么情况下用**\n\n- 忘记密码流程最后一步。\n- 已登录改密请用 my-profile/change-password。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/reset-password -H \"Content-Type: application/json\" -d \"{\\\"userId\\\":\\\"00000000-0000-0000-0000-000000000000\\\",\\\"resetToken\\\":\\\"token\\\",\\\"password\\\":\\\"1q2w3E*\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/reset-password HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"resetToken\": \"token\",\n  \"password\": \"1q2w3E*\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userId": "00000000-0000-0000-0000-000000000000",
+        "resetToken": "token-from-email",
+        "password": "1q2w3E*"
+      }
+    },
+    "POST /api/account/send-password-reset-code": {
+      "summary": "发送密码重置码",
+      "description": "**模块：** Account 账号模块（Swagger Tag：`Account`）\n\n**接口名：** `POST /api/account/send-password-reset-code`\n\n**作用**\n\n向用户邮箱发送重置密码验证码/链接（依赖邮件 Setting 已配置）。\n\n**参数说明**\n\n- Body：`email`、`appName`、`returnUrl`、`returnUrlHash` 等。\n\n**含义**\n\n成功表示已尝试发送；具体是否到达邮箱取决于 SMTP。\n\n**什么情况下用**\n\n- 忘记密码流程第一步。\n- 邮件未配置时不可用。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/send-password-reset-code -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"admin@example.com\\\",\\\"appName\\\":\\\"MVC\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/send-password-reset-code HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"email\": \"admin@example.com\",\n  \"appName\": \"MVC\"\n}"
+        }
+      ],
+      "requestExample": {
+        "email": "admin@example.com",
+        "appName": "MVC",
+        "returnUrl": "/",
+        "returnUrlHash": ""
+      }
+    },
+    "POST /api/account/verify-password-reset-token": {
+      "summary": "校验密码重置令牌",
+      "description": "**模块：** Account 账号模块（Swagger Tag：`Account`）\n\n**接口名：** `POST /api/account/verify-password-reset-token`\n\n**作用**\n\n验证用户持有的重置密码 Token/验证码是否有效，再进入设置新密码。\n\n**参数说明**\n\n- Body：`userId`、`resetToken` 等。\n\n**含义**\n\n返回是否有效（bool 或等价结果）。\n\n**什么情况下用**\n\n- 忘记密码流程中，用户点击邮件链接后校验 token。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/verify-password-reset-token -H \"Content-Type: application/json\" -d \"{\\\"userId\\\":\\\"00000000-0000-0000-0000-000000000000\\\",\\\"resetToken\\\":\\\"token-from-email\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/verify-password-reset-token HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"resetToken\": \"token-from-email\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userId": "00000000-0000-0000-0000-000000000000",
+        "resetToken": "token-from-email"
+      }
+    },
+    "GET /api/feature-management/features": {
+      "summary": "获取功能（Feature）列表与值",
+      "description": "**模块：** FeatureManagement · 功能管理（Swagger Tag：`Features`）\n\n**接口名：** `GET /api/feature-management/features`\n\n**作用**\n\n按 Provider 读取功能定义及当前赋值，用于功能管理 UI。\n\n**参数说明**\n\n- `providerName`（query）：提供方，如 `T`（租户）、`E`（Edition）等，以模块约定为准。\n- `providerKey`（query）：提供方键，如租户 Id。\n\n**含义**\n\n返回功能分组与各 Feature 当前值/是否可改。\n\n**什么情况下用**\n\n- 租户/版本功能管理页加载时。\n- 排查某 Feature 是否开启时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "groups": []
+      }
+    },
+    "PUT /api/feature-management/features": {
+      "summary": "更新功能（Feature）值",
+      "description": "**模块：** FeatureManagement · 功能管理（Swagger Tag：`Features`）\n\n**接口名：** `PUT /api/feature-management/features`\n\n**作用**\n\n按 Provider 批量保存功能开关/值。\n\n**参数说明**\n\n- Query：`providerName`、`providerKey`。\n- Body：待更新的 Feature 名值列表。\n\n**含义**\n\n保存后该租户/版本后续请求按新 Feature 生效（可能需刷新 application-configuration）。\n\n**什么情况下用**\n\n- 管理员在功能管理页保存时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"features\\\":[{\\\"name\\\":\\\"SettingManagement.Enable\\\",\\\"value\\\":\\\"true\\\"}]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"features\": [{\"name\": \"SettingManagement.Enable\", \"value\": \"true\"}]\n}"
+        }
+      ],
+      "requestExample": {
+        "features": [
+          {
+            "name": "SettingManagement.Enable",
+            "value": "true"
+          }
+        ]
+      }
+    },
+    "DELETE /api/feature-management/features": {
+      "summary": "删除 Provider 上的功能覆盖",
+      "description": "**模块：** FeatureManagement · 功能管理（Swagger Tag：`Features`）\n\n**接口名：** `DELETE /api/feature-management/features`\n\n**作用**\n\n清除指定 Provider 上的 Feature 赋值，回退到上层默认。\n\n**参数说明**\n\n- `providerName`、`providerKey`（query）。\n\n**含义**\n\n删除后该 Provider 不再持有覆盖值。\n\n**什么情况下用**\n\n- 重置租户功能到默认时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/roles": {
+      "summary": "分页查询角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `GET /api/identity/roles`\n\n**作用**\n\n按筛选条件分页列出角色。\n\n**参数说明**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`：标准分页/筛选。\n- `ExtraProperties`：扩展属性筛选（若启用）。\n\n**含义**\n\nPagedResult：`totalCount` + `items`（角色 DTO）。\n\n**什么情况下用**\n\n- 角色管理列表页。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/roles?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "admin",
+            "isDefault": false,
+            "isStatic": true,
+            "isPublic": true
+          }
+        ]
+      }
+    },
+    "POST /api/identity/roles": {
+      "summary": "创建角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `POST /api/identity/roles`\n\n**作用**\n\n新建角色。\n\n**参数说明**\n\n- Body：`name`、`isDefault`、`isPublic` 等。\n\n**含义**\n\n返回新建角色（含 Id）。\n\n**什么情况下用**\n\n- 角色管理「新建」时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/identity/roles -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"operator\\\",\\\"isDefault\\\":false,\\\"isPublic\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/identity/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"operator\",\n  \"isDefault\": false,\n  \"isPublic\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "operator",
+        "isDefault": false,
+        "isPublic": true
+      },
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "operator",
+        "isDefault": false,
+        "isStatic": false,
+        "isPublic": true
+      }
+    },
+    "GET /api/identity/roles/all": {
+      "summary": "获取全部角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `GET /api/identity/roles/all`\n\n**作用**\n\n返回全部角色列表（不分页），常用于下拉。\n\n**参数说明**\n\n无分页参数。\n\n**含义**\n\n角色列表。\n\n**什么情况下用**\n\n- 用户编辑页「可选角色」下拉。\n- 数据量大时慎用，优先分页接口。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/roles/all -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles/all HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "admin"
+          }
+        ]
+      }
+    },
+    "GET /api/identity/roles/{id}": {
+      "summary": "按 Id 获取角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `GET /api/identity/roles/{id}`\n\n**作用**\n\n获取单个角色详情。\n\n**参数说明**\n\n- `id`（path，Guid）。\n\n**含义**\n\n角色 DTO。\n\n**什么情况下用**\n\n- 角色编辑页加载时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "admin",
+        "isDefault": false,
+        "isStatic": true,
+        "isPublic": true
+      }
+    },
+    "PUT /api/identity/roles/{id}": {
+      "summary": "更新角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `PUT /api/identity/roles/{id}`\n\n**作用**\n\n更新角色名称与公开/默认等属性。静态角色可能有字段限制。\n\n**参数说明**\n\n- `id`（path）。\n- Body：角色更新 DTO。\n\n**含义**\n\n返回更新后角色。\n\n**什么情况下用**\n\n- 角色编辑保存时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"operator\\\",\\\"isDefault\\\":false,\\\"isPublic\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"operator\",\n  \"isDefault\": false,\n  \"isPublic\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "operator",
+        "isDefault": false,
+        "isPublic": true,
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/identity/roles/{id}": {
+      "summary": "删除角色",
+      "description": "**模块：** Identity · 角色（Swagger Tag：`Role`）\n\n**接口名：** `DELETE /api/identity/roles/{id}`\n\n**作用**\n\n删除指定角色（静态角色通常不可删）。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n成功则角色及关联授权按模块规则清理。\n\n**什么情况下用**\n\n- 角色管理删除确认后。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users": {
+      "summary": "分页查询用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users`\n\n**作用**\n\n按筛选条件分页列出用户。\n\n**参数说明**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`、`ExtraProperties`。\n\n**含义**\n\nPagedResult：用户列表。\n\n**什么情况下用**\n\n- 用户管理列表页。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "userName": "admin",
+            "email": "admin@example.com"
+          }
+        ]
+      }
+    },
+    "POST /api/identity/users": {
+      "summary": "创建用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `POST /api/identity/users`\n\n**作用**\n\n管理员创建用户并可同时指定角色、密码等。\n\n**参数说明**\n\n- Body：`userName`、`email`、`password`、`name`、`surname`、`isActive`、`roleNames` 等。\n\n**含义**\n\n返回新建用户。\n\n**什么情况下用**\n\n- 用户管理「新建用户」。\n- 关闭自注册时的唯一建号方式。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/identity/users -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"op1\\\",\\\"email\\\":\\\"op1@example.com\\\",\\\"password\\\":\\\"1q2w3E*\\\",\\\"isActive\\\":true,\\\"roleNames\\\":[\\\"admin\\\"]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/identity/users HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"op1\",\n  \"email\": \"op1@example.com\",\n  \"password\": \"1q2w3E*\",\n  \"isActive\": true,\n  \"roleNames\": [\"admin\"]\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "op1",
+        "email": "op1@example.com",
+        "password": "1q2w3E*",
+        "isActive": true,
+        "lockoutEnabled": true,
+        "roleNames": [
+          "admin"
+        ]
+      }
+    },
+    "GET /api/identity/users/assignable-roles": {
+      "summary": "获取可分配角色列表",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users/assignable-roles`\n\n**作用**\n\n返回当前操作者可分配给用户的角色集合。\n\n**参数说明**\n\n无业务参数。\n\n**含义**\n\n角色列表。\n\n**什么情况下用**\n\n- 创建/编辑用户时勾选角色。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/assignable-roles -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/assignable-roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/by-email/{email}": {
+      "summary": "按邮箱获取用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users/by-email/{email}`\n\n**作用**\n\n用邮箱查找用户。\n\n**参数说明**\n\n- `email`（path）。\n\n**含义**\n\n用户 DTO。\n\n**什么情况下用**\n\n- 邀请/找回等流程按邮箱定位用户时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/by-email/admin@example.com\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/by-email/admin@example.com HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/by-username/{userName}": {
+      "summary": "按用户名获取用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users/by-username/{userName}`\n\n**作用**\n\n用唯一用户名查找用户。\n\n**参数说明**\n\n- `userName`（path）。\n\n**含义**\n\n用户 DTO；不存在则 404/业务错误。\n\n**什么情况下用**\n\n- 已知用户名需取 Id/资料时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/by-username/admin -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/by-username/admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/by-username/{userName}": {
+      "summary": "查找用户（按用户名，轻量）",
+      "description": "**模块：** Identity · 用户查找（Swagger Tag：`UserLookup`）\n\n**接口名：** `GET /api/identity/users/lookup/by-username/{userName}`\n\n**作用**\n\n按用户名做轻量查找。\n\n**参数说明**\n\n- `userName`（path）。\n\n**含义**\n\n轻量用户 DTO。\n\n**什么情况下用**\n\n- 输入用户名解析 Id 时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/lookup/by-username/admin -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/by-username/admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/count": {
+      "summary": "用户查找计数",
+      "description": "**模块：** Identity · 用户查找（Swagger Tag：`UserLookup`）\n\n**接口名：** `GET /api/identity/users/lookup/count`\n\n**作用**\n\n按筛选条件返回匹配用户数量。\n\n**参数说明**\n\n- `Filter`（query）。\n\n**含义**\n\n数量（int64/int）。\n\n**什么情况下用**\n\n- 选人控件显示命中数、或搜索前计数。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/lookup/count?Filter=adm\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/count?Filter=adm HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/search": {
+      "summary": "搜索用户（轻量分页）",
+      "description": "**模块：** Identity · 用户查找（Swagger Tag：`UserLookup`）\n\n**接口名：** `GET /api/identity/users/lookup/search`\n\n**作用**\n\n按关键字分页搜索用户，供选人控件。\n\n**参数说明**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`、`ExtraProperties`。\n\n**含义**\n\n分页轻量用户列表。\n\n**什么情况下用**\n\n- 人员选择器、@提及搜索。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/lookup/search?Filter=adm&SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/search?Filter=adm&SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/{id}": {
+      "summary": "查找用户（按 Id，轻量）",
+      "description": "**模块：** Identity · 用户查找（Swagger Tag：`UserLookup`）\n\n**接口名：** `GET /api/identity/users/lookup/{id}`\n\n**作用**\n\n返回用于查找/提及的轻量用户信息（UserLookup）。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n轻量用户 DTO（通常含 id、userName 等）。\n\n**什么情况下用**\n\n- 跨模块选人、显示用户名缓存时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/lookup/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/{id}": {
+      "summary": "按 Id 获取用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users/{id}`\n\n**作用**\n\n获取单个用户详情。\n\n**参数说明**\n\n- `id`（path，Guid）。\n\n**含义**\n\n用户 DTO。\n\n**什么情况下用**\n\n- 用户编辑页加载。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": null,
+        "surname": null,
+        "isActive": true
+      }
+    },
+    "PUT /api/identity/users/{id}": {
+      "summary": "更新用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `PUT /api/identity/users/{id}`\n\n**作用**\n\n更新用户基本信息与状态。\n\n**参数说明**\n\n- `id`（path）。\n- Body：UpdateUserDto。\n\n**含义**\n\n返回更新后用户。\n\n**什么情况下用**\n\n- 用户编辑保存。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"op1\\\",\\\"email\\\":\\\"op1@example.com\\\",\\\"isActive\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"op1\",\n  \"email\": \"op1@example.com\",\n  \"isActive\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "op1",
+        "email": "op1@example.com",
+        "name": "Op",
+        "surname": "",
+        "isActive": true,
+        "lockoutEnabled": true,
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/identity/users/{id}": {
+      "summary": "删除用户",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `DELETE /api/identity/users/{id}`\n\n**作用**\n\n删除指定用户。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n用户删除成功。\n\n**什么情况下用**\n\n- 用户管理删除确认后。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/{id}/roles": {
+      "summary": "获取用户已有角色",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `GET /api/identity/users/{id}/roles`\n\n**作用**\n\n列出指定用户当前拥有的角色。\n\n**参数说明**\n\n- `id`（path）：用户 Id。\n\n**含义**\n\n角色列表。\n\n**什么情况下用**\n\n- 用户详情/编辑页展示已选角色。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/{id}/roles -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/{id}/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/identity/users/{id}/roles": {
+      "summary": "更新用户角色",
+      "description": "**模块：** Identity · 用户（Swagger Tag：`User`）\n\n**接口名：** `PUT /api/identity/users/{id}/roles`\n\n**作用**\n\n覆盖设置用户所属角色列表。\n\n**参数说明**\n\n- `id`（path）。\n- Body：`roleNames` 数组。\n\n**含义**\n\n用户角色变为提交列表；权限随之变化。\n\n**什么情况下用**\n\n- 单独调整用户角色时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/users/{id}/roles -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"roleNames\\\":[\\\"admin\\\"]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/users/{id}/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"roleNames\": [\"admin\"]\n}"
+        }
+      ],
+      "requestExample": {
+        "roleNames": [
+          "admin",
+          "operator"
+        ]
+      }
+    },
+    "GET /api/multi-tenancy/tenants": {
+      "summary": "分页查询租户",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `GET /api/multi-tenancy/tenants`\n\n**作用**\n\n主机侧分页列出租户。\n\n**参数说明**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`。\n\n**含义**\n\nPagedResult：租户列表。\n\n**什么情况下用**\n\n- 租户管理列表（仅 Host）。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/multi-tenancy/tenants?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "acme"
+          }
+        ]
+      }
+    },
+    "POST /api/multi-tenancy/tenants": {
+      "summary": "创建租户",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `POST /api/multi-tenancy/tenants`\n\n**作用**\n\n创建新租户（可含管理员账号等，视 DTO）。\n\n**参数说明**\n\n- Body：`name`、管理员用户名/密码/邮箱等。\n\n**含义**\n\n返回新建租户。\n\n**什么情况下用**\n\n- Host 开通新客户租户时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/multi-tenancy/tenants -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"acme\\\",\\\"adminEmailAddress\\\":\\\"admin@acme.com\\\",\\\"adminPassword\\\":\\\"1q2w3E*\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/multi-tenancy/tenants HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"acme\",\n  \"adminEmailAddress\": \"admin@acme.com\",\n  \"adminPassword\": \"1q2w3E*\"\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "acme",
+        "adminEmailAddress": "admin@acme.com",
+        "adminPassword": "1q2w3E*"
+      }
+    },
+    "GET /api/multi-tenancy/tenants/{id}": {
+      "summary": "获取租户详情",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `GET /api/multi-tenancy/tenants/{id}`\n\n**作用**\n\n按 Id 获取租户。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n租户 DTO。\n\n**什么情况下用**\n\n- 租户编辑页。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "acme"
+      }
+    },
+    "PUT /api/multi-tenancy/tenants/{id}": {
+      "summary": "更新租户",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `PUT /api/multi-tenancy/tenants/{id}`\n\n**作用**\n\n更新租户名称等基本信息。\n\n**参数说明**\n\n- `id`（path）。\n- Body：更新 DTO。\n\n**含义**\n\n返回更新后租户。\n\n**什么情况下用**\n\n- 租户编辑保存。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"acme\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"acme\"\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "acme",
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/multi-tenancy/tenants/{id}": {
+      "summary": "删除租户",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `DELETE /api/multi-tenancy/tenants/{id}`\n\n**作用**\n\n删除租户（危险操作，通常伴随数据侧清理策略）。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n租户删除成功。\n\n**什么情况下用**\n\n- Host 下线租户时（需二次确认）。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "获取租户默认连接字符串",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `GET /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**作用**\n\n读取租户独立数据库的默认连接字符串（若启用每租户库）。\n\n**参数说明**\n\n- `id`（path）：租户 Id。\n\n**含义**\n\n连接字符串文本；未配置可能为空。\n\n**什么情况下用**\n\n- 租户库连接配置页查看时（敏感，需严格授权）。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants/{id}/default-connection-string HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "设置租户默认连接字符串",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `PUT /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**作用**\n\n为租户配置/更新默认数据库连接字符串。\n\n**参数说明**\n\n- `id`（path）。\n- `defaultConnectionString`（query，按 Swagger 绑定）：连接字符串。\n\n**含义**\n\n保存后该租户数据访问指向新库（需迁移/就绪）。\n\n**什么情况下用**\n\n- 为租户切换独立库时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string?defaultConnectionString=Server%3D...;\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/multi-tenancy/tenants/{id}/default-connection-string?defaultConnectionString=Server%3D...; HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "DELETE /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "删除租户默认连接字符串",
+      "description": "**模块：** TenantManagement · 租户（Swagger Tag：`Tenant`）\n\n**接口名：** `DELETE /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**作用**\n\n清除租户独立连接串，回退到默认库策略。\n\n**参数说明**\n\n- `id`（path）。\n\n**含义**\n\n连接串删除成功。\n\n**什么情况下用**\n\n- 取消租户独立库、改回共享库时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/multi-tenancy/tenants/{id}/default-connection-string HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions": {
+      "summary": "获取权限树与授予状态",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions`\n\n**作用**\n\n按 Provider（角色/用户等）返回权限分组及是否已授予，供权限管理 UI。\n\n**参数说明**\n\n- `providerName`（query）：如 `R`（Role）、`U`（User）。\n- `providerKey`（query）：角色名或用户 Id。\n\n**含义**\n\n返回权限组与每项 `isGranted` 状态。\n\n**什么情况下用**\n\n- 给角色/用户勾选权限的管理页。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions?providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions?providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "entityDisplayName": "admin",
+        "groups": []
+      }
+    },
+    "PUT /api/permission-management/permissions": {
+      "summary": "更新权限授予",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `PUT /api/permission-management/permissions`\n\n**作用**\n\n保存某 Provider 下一批权限的授予/撤销。\n\n**参数说明**\n\n- Query：`providerName`、`providerKey`。\n- Body：权限名与 isGranted 列表。\n\n**含义**\n\n保存后目标角色/用户权限变更；相关用户可能需刷新 Dynamic Claims / application-configuration。\n\n**什么情况下用**\n\n- 权限管理页点击保存时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/permission-management/permissions?providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"permissions\\\":[{\\\"name\\\":\\\"AbpIdentity.Users\\\",\\\"isGranted\\\":true}]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/permission-management/permissions?providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"permissions\": [{\"name\": \"AbpIdentity.Users\", \"isGranted\": true}]\n}"
+        }
+      ],
+      "requestExample": {
+        "permissions": [
+          {
+            "name": "AbpIdentity.Users",
+            "isGranted": true
+          }
+        ]
+      }
+    },
+    "GET /api/permission-management/permissions/by-group": {
+      "summary": "按权限组获取权限",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/by-group`\n\n**作用**\n\n只返回指定权限组下的权限与授予状态，减轻大权限树体积。\n\n**参数说明**\n\n- `groupName`（query）：权限组名。\n- `providerName`、`providerKey`（query）。\n\n**含义**\n\n同 permissions，但限定单组。\n\n**什么情况下用**\n\n- 按模块分页/分 Tab 加载权限时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/by-group?groupName=AbpIdentity&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/by-group?groupName=AbpIdentity&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource": {
+      "summary": "获取资源级权限",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/resource`\n\n**作用**\n\n按资源名+资源键读取该资源上的权限授予（资源级授权场景）。\n\n**参数说明**\n\n- `resourceName`、`resourceKey`（query）。\n\n**含义**\n\n返回该资源上的权限状态集合。\n\n**什么情况下用**\n\n- 启用了资源级权限（对某个实体实例授权）时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/permission-management/permissions/resource": {
+      "summary": "更新资源级权限",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `PUT /api/permission-management/permissions/resource`\n\n**作用**\n\n保存某资源上的权限授予。\n\n**参数说明**\n\n- Query：`resourceName`、`resourceKey`。\n- Body：权限授予列表。\n\n**含义**\n\n资源实例级授权更新。\n\n**什么情况下用**\n\n- 对单个业务对象做授权保存时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"permissions\\\":[]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"permissions\": []\n}"
+        }
+      ],
+      "requestExample": {
+        "permissions": [
+          {
+            "name": "MyPermission",
+            "isGranted": true
+          }
+        ]
+      }
+    },
+    "DELETE /api/permission-management/permissions/resource": {
+      "summary": "删除资源级权限授予",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `DELETE /api/permission-management/permissions/resource`\n\n**作用**\n\n清除指定资源在某 Provider 上的权限覆盖。\n\n**参数说明**\n\n- `resourceName`、`resourceKey`、`providerName`、`providerKey`（query）。\n\n**含义**\n\n删除后回退默认权限策略。\n\n**什么情况下用**\n\n- 撤销某实体上的特殊授权时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource-definitions": {
+      "summary": "获取资源权限定义",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/resource-definitions`\n\n**作用**\n\n列出某资源名下可用的权限定义元数据。\n\n**参数说明**\n\n- `resourceName`（query）。\n\n**含义**\n\n返回可授予的权限定义列表。\n\n**什么情况下用**\n\n- 构建资源级授权 UI 的可选项时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource-definitions?resourceName=MyResource\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource-definitions?resourceName=MyResource HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource-provider-key-lookup-services": {
+      "summary": "获取资源 Provider Key 查找服务列表",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/resource-provider-key-lookup-services`\n\n**作用**\n\n返回可用于查找资源级授权 ProviderKey 的查找服务元数据。\n\n**参数说明**\n\n- `resourceName`（query）。\n\n**含义**\n\n服务名列表，供前端下拉/搜索对接。\n\n**什么情况下用**\n\n- 资源授权 UI 需要「选角色/用户」查找器时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource-provider-key-lookup-services?resourceName=MyResource\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource-provider-key-lookup-services?resourceName=MyResource HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource/by-provider": {
+      "summary": "按 Provider 获取资源级权限",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/resource/by-provider`\n\n**作用**\n\n在资源维度上再按 Provider 过滤权限授予。\n\n**参数说明**\n\n- `resourceName`、`resourceKey`、`providerName`、`providerKey`（query）。\n\n**含义**\n\n返回指定 Provider 在该资源上的权限。\n\n**什么情况下用**\n\n- 资源级授权 UI 按角色/用户查看时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource/by-provider?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource/by-provider?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/search-resource-provider-keys": {
+      "summary": "搜索资源 Provider Key",
+      "description": "**模块：** PermissionManagement · 权限管理（Swagger Tag：`Permissions`）\n\n**接口名：** `GET /api/permission-management/permissions/search-resource-provider-keys`\n\n**作用**\n\n按关键字分页搜索可用于资源授权的 ProviderKey（用户/角色等）。\n\n**参数说明**\n\n- `resourceName`、`serviceName`、`filter`、`page`（query）。\n\n**含义**\n\n分页查找结果。\n\n**什么情况下用**\n\n- 资源授权弹窗搜索主体时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/search-resource-provider-keys?resourceName=MyResource&serviceName=User&filter=adm&page=1\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/search-resource-provider-keys?resourceName=MyResource&serviceName=User&filter=adm&page=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/setting-management/emailing": {
+      "summary": "获取邮件设置",
+      "description": "**模块：** SettingManagement · 邮件设置（Swagger Tag：`EmailSettings`）\n\n**接口名：** `GET /api/setting-management/emailing`\n\n**作用**\n\n读取当前（主机/租户）邮件 SMTP 等相关 Setting。\n\n**参数说明**\n\n无额外业务参数（受权限与租户上下文约束）。\n\n**含义**\n\n返回发件人、SMTP 主机、端口、SSL、用户名等（密码通常脱敏）。\n\n**什么情况下用**\n\n- 设置中心「邮件」页加载时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/emailing -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/emailing HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "smtpHost": "smtp.example.com",
+        "smtpPort": 587,
+        "smtpUserName": "noreply@example.com",
+        "smtpEnableSsl": true,
+        "smtpUseDefaultCredentials": false,
+        "defaultFromAddress": "noreply@example.com",
+        "defaultFromDisplayName": "RCS"
+      }
+    },
+    "POST /api/setting-management/emailing": {
+      "summary": "更新邮件设置",
+      "description": "**模块：** SettingManagement · 邮件设置（Swagger Tag：`EmailSettings`）\n\n**接口名：** `POST /api/setting-management/emailing`\n\n**作用**\n\n保存邮件 SMTP 与默认发件人等 Setting。\n\n**参数说明**\n\n- Body：SMTP 主机/端口/账号/密码、SSL、默认发件人等。\n\n**含义**\n\n保存后后续邮件发送使用新配置。\n\n**什么情况下用**\n\n- 管理员在设置中心保存邮件配置时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/setting-management/emailing -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"smtpHost\\\":\\\"smtp.example.com\\\",\\\"smtpPort\\\":587,\\\"defaultFromAddress\\\":\\\"noreply@example.com\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/emailing HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"smtpHost\": \"smtp.example.com\",\n  \"smtpPort\": 587,\n  \"defaultFromAddress\": \"noreply@example.com\"\n}"
+        }
+      ],
+      "requestExample": {
+        "smtpHost": "smtp.example.com",
+        "smtpPort": 587,
+        "smtpUserName": "noreply@example.com",
+        "smtpPassword": "***",
+        "smtpEnableSsl": true,
+        "smtpUseDefaultCredentials": false,
+        "defaultFromAddress": "noreply@example.com",
+        "defaultFromDisplayName": "RCS"
+      }
+    },
+    "POST /api/setting-management/emailing/send-test-email": {
+      "summary": "发送测试邮件",
+      "description": "**模块：** SettingManagement · 邮件设置（Swagger Tag：`EmailSettings`）\n\n**接口名：** `POST /api/setting-management/emailing/send-test-email`\n\n**作用**\n\n用当前邮件设置发一封测试邮件，验证 SMTP 是否可用。\n\n**参数说明**\n\n- Body：收件人、主题、正文等（SendTestEmailInput）。\n\n**含义**\n\n成功表示已提交发送；失败则返回 SMTP/配置错误。\n\n**什么情况下用**\n\n- 改完邮件设置后点「发送测试」时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/setting-management/emailing/send-test-email -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"senderEmailAddress\\\":\\\"noreply@example.com\\\",\\\"targetEmailAddress\\\":\\\"you@example.com\\\",\\\"subject\\\":\\\"Test\\\",\\\"body\\\":\\\"Hello\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/emailing/send-test-email HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"senderEmailAddress\": \"noreply@example.com\",\n  \"targetEmailAddress\": \"you@example.com\",\n  \"subject\": \"Test\",\n  \"body\": \"Hello\"\n}"
+        }
+      ],
+      "requestExample": {
+        "senderEmailAddress": "noreply@example.com",
+        "targetEmailAddress": "you@example.com",
+        "subject": "Test",
+        "body": "Hello"
+      }
+    },
+    "GET /api/setting-management/timezone": {
+      "summary": "获取应用时区设置",
+      "description": "**模块：** SettingManagement · 时区（Swagger Tag：`TimeZoneSettings`）\n\n**接口名：** `GET /api/setting-management/timezone`\n\n**作用**\n\n读取当前时区 Setting 值。\n\n**参数说明**\n\n无业务参数。\n\n**含义**\n\n返回时区标识字符串（如 IANA/Windows 名，视配置而定）。\n\n**什么情况下用**\n\n- 设置中心时区页、或前端校正展示时间时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/timezone -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/timezone HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": "UTC"
+    },
+    "POST /api/setting-management/timezone": {
+      "summary": "更新应用时区",
+      "description": "**模块：** SettingManagement · 时区（Swagger Tag：`TimeZoneSettings`）\n\n**接口名：** `POST /api/setting-management/timezone`\n\n**作用**\n\n保存应用/租户时区 Setting。\n\n**参数说明**\n\n- `timezone`（query，按实际绑定）：时区名。\n\n**含义**\n\n保存后 Clock/展示时间按新时区解释（前端应刷新 application-configuration）。\n\n**什么情况下用**\n\n- 管理员修改系统时区时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST \"http://localhost:9000/api/setting-management/timezone?timezone=China%20Standard%20Time\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/timezone?timezone=China%20Standard%20Time HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/setting-management/timezone/timezones": {
+      "summary": "获取可选时区列表",
+      "description": "**模块：** SettingManagement · 时区（Swagger Tag：`TimeZoneSettings`）\n\n**接口名：** `GET /api/setting-management/timezone/timezones`\n\n**作用**\n\n返回系统支持选择的时区列表，供下拉框。\n\n**参数说明**\n\n无业务参数。\n\n**含义**\n\n时区名与显示名列表。\n\n**什么情况下用**\n\n- 时区设置页加载下拉选项时。",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/timezone/timezones -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/timezone/timezones HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": [
+        {
+          "name": "UTC",
+          "value": "UTC"
         }
       ]
     }
