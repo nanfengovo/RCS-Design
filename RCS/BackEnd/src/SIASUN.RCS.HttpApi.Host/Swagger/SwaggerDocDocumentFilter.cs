@@ -7,19 +7,28 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace SIASUN.RCS.Swagger
 {
     /// <summary>
-    /// 把 SwaggerDoc.json 里的 tags 说明贴到 OpenAPI Document.Tags 上（Swagger UI 分组标题注释）。
+    /// 按文档文化把 Tag 说明贴到 OpenAPI Document.Tags。
     /// </summary>
     public class SwaggerDocDocumentFilter : IDocumentFilter
     {
+        private readonly ISwaggerDocStore _store;
+
+        public SwaggerDocDocumentFilter(ISwaggerDocStore store)
+        {
+            _store = store;
+        }
+
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
-            var tagDocs = SwaggerDocStore.Instance.Tags;
-            if (tagDocs is null || tagDocs.Count == 0)
+            var culture = SwaggerDocNames.GetCulture(context.DocumentName) ?? _store.DefaultCulture;
+            culture = _store.ResolveCulture(culture);
+
+            var tagDocs = _store.GetTags(culture);
+            if (tagDocs.Count == 0)
                 return;
 
             swaggerDoc.Tags ??= new HashSet<OpenApiTag>();
 
-            // 文档里已出现的 tag 名（来自各 Operation）
             var used = new HashSet<string>(StringComparer.Ordinal);
             if (swaggerDoc.Paths is not null)
             {
@@ -47,7 +56,6 @@ namespace SIASUN.RCS.Swagger
                 if (string.IsNullOrWhiteSpace(tagName) || doc is null)
                     continue;
 
-                // 本 OpenAPI 文档未用到的 Tag 不注入，避免污染其它 Swagger 分组（rcs/dashboard）
                 if (used.Count > 0 && !used.Contains(tagName))
                     continue;
 
@@ -61,8 +69,6 @@ namespace SIASUN.RCS.Swagger
                 if (existing is not null)
                 {
                     existing.Description = description;
-                    if (!string.IsNullOrWhiteSpace(doc.Name))
-                        existing.Name = tagName; // Name 仍用原始 Tag，便于与 Operation 关联
                 }
                 else
                 {

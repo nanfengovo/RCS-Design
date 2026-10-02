@@ -1,0 +1,1364 @@
+{
+  "tags": {
+    "AbpApiDefinition": {
+      "name": "AbpApiDefinition",
+      "description": "ABP · API Definition: exposes /api/abp/api-definition with the HTTP API contract model for generate-proxy / dynamic clients (not OpenAPI)."
+    },
+    "AbpApplicationConfiguration": {
+      "name": "AbpApplicationConfiguration",
+      "description": "ABP · Application Configuration: exposes /api/abp/application-configuration with runtime Config State (user, permissions, settings, features, tenant, clock)."
+    },
+    "AbpApplicationLocalization": {
+      "name": "AbpApplicationLocalization",
+      "description": "ABP · Application Localization: returns localization resources by cultureName for SPA i18n; can complement application-configuration."
+    },
+    "AbpTenant": {
+      "name": "AbpTenant",
+      "description": "ABP · Tenant resolve: resolve tenant by name or id for login / gateway (__tenant)."
+    },
+    "Account": {
+      "name": "Account",
+      "description": "Account: self-registration and password reset. See Login for session; Profile for my-profile."
+    },
+    "Login": {
+      "name": "Login",
+      "description": "Account · Login session: cookie login/logout/check-password. Prefer /connect/token for Bearer SPA."
+    },
+    "Profile": {
+      "name": "Profile",
+      "description": "Account · Profile: current user profile and change-password."
+    },
+    "DynamicClaims": {
+      "name": "DynamicClaims",
+      "description": "Account · Dynamic Claims: refresh dynamic claims after role/permission changes."
+    },
+    "Features": {
+      "name": "Features",
+      "description": "FeatureManagement: get/update/clear feature values by provider (tenant/edition)."
+    },
+    "Permissions": {
+      "name": "Permissions",
+      "description": "PermissionManagement: grant permissions by role/user provider and resource-level APIs."
+    },
+    "EmailSettings": {
+      "name": "EmailSettings",
+      "description": "SettingManagement · Email: SMTP settings and send-test-email."
+    },
+    "TimeZoneSettings": {
+      "name": "TimeZoneSettings",
+      "description": "SettingManagement · Timezone: get/update app timezone and list options."
+    },
+    "Role": {
+      "name": "Role",
+      "description": "Identity · Roles: CRUD and list roles for administration."
+    },
+    "User": {
+      "name": "User",
+      "description": "Identity · Users: user CRUD, lookup by name/email, assign roles."
+    },
+    "UserLookup": {
+      "name": "UserLookup",
+      "description": "Identity · User lookup: lightweight search/count for pickers (not full user admin)."
+    },
+    "Tenant": {
+      "name": "Tenant",
+      "description": "TenantManagement: host-side tenant CRUD and default connection string."
+    }
+  },
+  "operations": {
+    "GET /api/abp/api-definition": {
+      "summary": "Get API definition model",
+      "description": "**Module:** AbpApiDefinition (Swagger Tag: `AbpApiDefinition`)\n\n**Endpoint:** `GET /api/abp/api-definition`\n\n**Purpose**\n\nGet API definition model.\n\n**Parameters**\n\n- `includeTypes` (bool，默认 false)：为 true 时填充 `types` (DTO/枚举属性与校验元数据)。\n- `includeDescriptions` (bool，默认 false)：为 true 时尽量带上 XML 注释中的 Summary/Description。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get API definition model. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/api-definition?includeTypes=true\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/api-definition?includeTypes=true HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "modules": {
+          "app": {
+            "rootPath": "app",
+            "remoteServiceName": "Default",
+            "controllers": {}
+          }
+        },
+        "types": {}
+      }
+    },
+    "GET /api/abp/application-configuration": {
+      "summary": "Get application runtime configuration",
+      "description": "**Module:** AbpApplicationConfiguration (Swagger Tag: `AbpApplicationConfiguration`)\n\n**Endpoint:** `GET /api/abp/application-configuration`\n\n**Purpose**\n\nGet application runtime configuration.\n\n**Parameters**\n\n- `includeLocalizationResources` (bool，默认 true)：是否填充 `localization.values` 大包文案。false 可显著减小体积，文案改走 application-localization。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get application runtime configuration. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/application-configuration?includeLocalizationResources=false\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/application-configuration?includeLocalizationResources=false HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "currentUser": {
+          "isAuthenticated": false,
+          "userName": null
+        },
+        "auth": {
+          "grantedPolicies": {}
+        },
+        "localization": {
+          "values": {}
+        },
+        "setting": {
+          "values": {}
+        },
+        "features": {
+          "values": {}
+        },
+        "currentTenant": {
+          "id": null,
+          "name": null,
+          "isAvailable": false
+        }
+      }
+    },
+    "GET /api/abp/application-localization": {
+      "summary": "Get localization texts by culture",
+      "description": "**Module:** AbpApplicationLocalization (Swagger Tag: `AbpApplicationLocalization`)\n\n**Endpoint:** `GET /api/abp/application-localization`\n\n**Purpose**\n\nGet localization texts by culture.\n\n**Parameters**\n\n- `cultureName` (string，**required**)：文化代码，如 `en`、`zh-Hans`。不传返回 400。\n- `onlyDynamics` (bool，默认 false)：true 时只返回动态本地化 (库内覆盖)；静态 JSON 不返回。Blazor/MVC 已内嵌静态资源时可设 true。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get localization texts by culture. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/application-localization?cultureName=zh-Hans\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/application-localization?cultureName=zh-Hans HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "currentCulture": {
+          "cultureName": "zh-Hans"
+        },
+        "resources": {
+          "RCS": {
+            "texts": {
+              "Menu:Home": "首页",
+              "AppName": "RCS"
+            },
+            "baseResources": [
+              "AbpValidation",
+              "AbpUi"
+            ]
+          }
+        }
+      }
+    },
+    "GET /api/abp/multi-tenancy/tenants/by-id/{id}": {
+      "summary": "Resolve tenant by id",
+      "description": "**Module:** AbpTenant (Swagger Tag: `AbpTenant`)\n\n**Endpoint:** `GET /api/abp/multi-tenancy/tenants/by-id/{id}`\n\n**Purpose**\n\nResolve tenant by id.\n\n**Parameters**\n\n- `id` (path，Guid，required)：租户 Id。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Resolve tenant by id. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/multi-tenancy/tenants/by-id/{tenant-guid}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/multi-tenancy/tenants/by-id/{tenant-guid} HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "success": true,
+        "tenantId": "00000000-0000-0000-0000-000000000000",
+        "name": "acme",
+        "isActive": true
+      }
+    },
+    "GET /api/abp/multi-tenancy/tenants/by-name/{name}": {
+      "summary": "Resolve tenant by name",
+      "description": "**Module:** AbpTenant (Swagger Tag: `AbpTenant`)\n\n**Endpoint:** `GET /api/abp/multi-tenancy/tenants/by-name/{name}`\n\n**Purpose**\n\nResolve tenant by name.\n\n**Parameters**\n\n- `name` (path，string，required)：租户名称。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Resolve tenant by name. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/abp/multi-tenancy/tenants/by-name/acme\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/abp/multi-tenancy/tenants/by-name/acme HTTP/1.1\nHost: localhost:9000"
+        }
+      ],
+      "responseExample": {
+        "success": true,
+        "tenantId": "00000000-0000-0000-0000-000000000000",
+        "name": "acme",
+        "isActive": true
+      }
+    },
+    "POST /api/account/check-password": {
+      "summary": "Check current user password",
+      "description": "**Module:** Login (Swagger Tag: `Login`)\n\n**Endpoint:** `POST /api/account/check-password`\n\n**Purpose**\n\nCheck current user password.\n\n**Parameters**\n\n- Body 含密码字段 (与 Account 模块 CheckPassword DTO 一致，通常为 `password`)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Check current user password. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/check-password -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"password\\\":\\\"***\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/check-password HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"password\": \"***\"\n}"
+        }
+      ],
+      "requestExample": {
+        "password": "***"
+      }
+    },
+    "POST /api/account/dynamic-claims/refresh": {
+      "summary": "Refresh dynamic claims",
+      "description": "**Module:** DynamicClaims (Swagger Tag: `DynamicClaims`)\n\n**Endpoint:** `POST /api/account/dynamic-claims/refresh`\n\n**Purpose**\n\nRefresh dynamic claims.\n\n**Parameters**\n\nNo business body (uses current authenticated user).\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Refresh dynamic claims. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/dynamic-claims/refresh -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/dynamic-claims/refresh HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "POST /api/account/login": {
+      "summary": "Password login",
+      "description": "**Module:** Login (Swagger Tag: `Login`)\n\n**Endpoint:** `POST /api/account/login`\n\n**Purpose**\n\nPassword login.\n\n**Parameters**\n\n- Body `userNameOrEmailAddress` (string)：用户名或邮箱。\n- Body `password` (string)：密码。\n- Body `rememberMe` (bool)：是否持久记住登录。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Password login. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/login -H \"Content-Type: application/json\" -d \"{\\\"userNameOrEmailAddress\\\":\\\"admin\\\",\\\"password\\\":\\\"***\\\",\\\"rememberMe\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/login HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userNameOrEmailAddress\": \"admin\",\n  \"password\": \"***\",\n  \"rememberMe\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "userNameOrEmailAddress": "admin",
+        "password": "你的密码",
+        "rememberMe": true
+      },
+      "responseExample": {
+        "result": 1,
+        "description": "Success"
+      }
+    },
+    "GET /api/account/logout": {
+      "summary": "Logout",
+      "description": "**Module:** Login (Swagger Tag: `Login`)\n\n**Endpoint:** `GET /api/account/logout`\n\n**Purpose**\n\nLogout.\n\n**Parameters**\n\nNo business parameters (依赖当前认证上下文)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Logout. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X GET http://localhost:9000/api/account/logout -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/account/logout HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/account/my-profile": {
+      "summary": "Get my profile",
+      "description": "**Module:** Profile (Swagger Tag: `Profile`)\n\n**Endpoint:** `GET /api/account/my-profile`\n\n**Purpose**\n\nGet my profile.\n\n**Parameters**\n\nNo business parameters (依赖 Authorization)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get my profile. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/account/my-profile -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/account/my-profile HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": "admin",
+        "surname": null,
+        "phoneNumber": null
+      }
+    },
+    "PUT /api/account/my-profile": {
+      "summary": "Update my profile",
+      "description": "**Module:** Profile (Swagger Tag: `Profile`)\n\n**Endpoint:** `PUT /api/account/my-profile`\n\n**Purpose**\n\nUpdate my profile.\n\n**Parameters**\n\n- Body：`userName`、`email`、`name`、`surname`、`phoneNumber` 等 (以 UpdateProfileDto 为准)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update my profile. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/account/my-profile -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"admin\\\",\\\"email\\\":\\\"admin@example.com\\\",\\\"name\\\":\\\"Admin\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/account/my-profile HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"name\": \"Admin\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": "Admin",
+        "surname": "",
+        "phoneNumber": ""
+      }
+    },
+    "POST /api/account/my-profile/change-password": {
+      "summary": "Change my password",
+      "description": "**Module:** Profile (Swagger Tag: `Profile`)\n\n**Endpoint:** `POST /api/account/my-profile/change-password`\n\n**Purpose**\n\nChange my password.\n\n**Parameters**\n\n- Body：`currentPassword`、`newPassword`。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Change my password. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/my-profile/change-password -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"currentPassword\\\":\\\"***\\\",\\\"newPassword\\\":\\\"***\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/my-profile/change-password HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"currentPassword\": \"***\",\n  \"newPassword\": \"***\"\n}"
+        }
+      ],
+      "requestExample": {
+        "currentPassword": "旧密码",
+        "newPassword": "新密码"
+      }
+    },
+    "POST /api/account/register": {
+      "summary": "Self-register",
+      "description": "**Module:** Account (Swagger Tag: `Account`)\n\n**Endpoint:** `POST /api/account/register`\n\n**Purpose**\n\nSelf-register.\n\n**Parameters**\n\n- Body：`userName`、`emailAddress`、`password`、`appName` 等 (以实际 DTO 为准)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Self-register. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/register -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"demo\\\",\\\"emailAddress\\\":\\\"demo@example.com\\\",\\\"password\\\":\\\"1q2w3E*\\\",\\\"appName\\\":\\\"MVC\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/register HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userName\": \"demo\",\n  \"emailAddress\": \"demo@example.com\",\n  \"password\": \"1q2w3E*\",\n  \"appName\": \"MVC\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "demo",
+        "emailAddress": "demo@example.com",
+        "password": "1q2w3E*",
+        "appName": "MVC"
+      }
+    },
+    "POST /api/account/reset-password": {
+      "summary": "Reset password",
+      "description": "**Module:** Account (Swagger Tag: `Account`)\n\n**Endpoint:** `POST /api/account/reset-password`\n\n**Purpose**\n\nReset password.\n\n**Parameters**\n\n- Body：`userId`、`resetToken`、`password`。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Reset password. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/reset-password -H \"Content-Type: application/json\" -d \"{\\\"userId\\\":\\\"00000000-0000-0000-0000-000000000000\\\",\\\"resetToken\\\":\\\"token\\\",\\\"password\\\":\\\"1q2w3E*\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/reset-password HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"resetToken\": \"token\",\n  \"password\": \"1q2w3E*\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userId": "00000000-0000-0000-0000-000000000000",
+        "resetToken": "token-from-email",
+        "password": "1q2w3E*"
+      }
+    },
+    "POST /api/account/send-password-reset-code": {
+      "summary": "Send password reset code",
+      "description": "**Module:** Account (Swagger Tag: `Account`)\n\n**Endpoint:** `POST /api/account/send-password-reset-code`\n\n**Purpose**\n\nSend password reset code.\n\n**Parameters**\n\n- Body：`email`、`appName`、`returnUrl`、`returnUrlHash` 等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Send password reset code. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/send-password-reset-code -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"admin@example.com\\\",\\\"appName\\\":\\\"MVC\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/send-password-reset-code HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"email\": \"admin@example.com\",\n  \"appName\": \"MVC\"\n}"
+        }
+      ],
+      "requestExample": {
+        "email": "admin@example.com",
+        "appName": "MVC",
+        "returnUrl": "/",
+        "returnUrlHash": ""
+      }
+    },
+    "POST /api/account/verify-password-reset-token": {
+      "summary": "Verify password reset token",
+      "description": "**Module:** Account (Swagger Tag: `Account`)\n\n**Endpoint:** `POST /api/account/verify-password-reset-token`\n\n**Purpose**\n\nVerify password reset token.\n\n**Parameters**\n\n- Body：`userId`、`resetToken` 等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Verify password reset token. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/account/verify-password-reset-token -H \"Content-Type: application/json\" -d \"{\\\"userId\\\":\\\"00000000-0000-0000-0000-000000000000\\\",\\\"resetToken\\\":\\\"token-from-email\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/account/verify-password-reset-token HTTP/1.1\nHost: localhost:9000\nContent-Type: application/json\n\n{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"resetToken\": \"token-from-email\"\n}"
+        }
+      ],
+      "requestExample": {
+        "userId": "00000000-0000-0000-0000-000000000000",
+        "resetToken": "token-from-email"
+      }
+    },
+    "GET /api/feature-management/features": {
+      "summary": "Get features",
+      "description": "**Module:** Features (Swagger Tag: `Features`)\n\n**Endpoint:** `GET /api/feature-management/features`\n\n**Purpose**\n\nGet features.\n\n**Parameters**\n\n- `providerName` (query)：提供方，如 `T` (租户)、`E` (Edition)等，以模块约定为准。\n- `providerKey` (query)：提供方键，如租户 Id。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get features. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "groups": []
+      }
+    },
+    "PUT /api/feature-management/features": {
+      "summary": "Update features",
+      "description": "**Module:** Features (Swagger Tag: `Features`)\n\n**Endpoint:** `PUT /api/feature-management/features`\n\n**Purpose**\n\nUpdate features.\n\n**Parameters**\n\n- Query：`providerName`、`providerKey`。\n- Body：待更新的 Feature 名值列表。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update features. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"features\\\":[{\\\"name\\\":\\\"SettingManagement.Enable\\\",\\\"value\\\":\\\"true\\\"}]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"features\": [{\"name\": \"SettingManagement.Enable\", \"value\": \"true\"}]\n}"
+        }
+      ],
+      "requestExample": {
+        "features": [
+          {
+            "name": "SettingManagement.Enable",
+            "value": "true"
+          }
+        ]
+      }
+    },
+    "DELETE /api/feature-management/features": {
+      "summary": "Delete feature overrides",
+      "description": "**Module:** Features (Swagger Tag: `Features`)\n\n**Endpoint:** `DELETE /api/feature-management/features`\n\n**Purpose**\n\nDelete feature overrides.\n\n**Parameters**\n\n- `providerName`、`providerKey` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete feature overrides. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE \"http://localhost:9000/api/feature-management/features?providerName=T&providerKey={tenantId}\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/feature-management/features?providerName=T&providerKey={tenantId} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/roles": {
+      "summary": "List roles (paged)",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `GET /api/identity/roles`\n\n**Purpose**\n\nList roles (paged).\n\n**Parameters**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`：标准分页/筛选。\n- `ExtraProperties`：扩展属性筛选 (若启用)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List roles (paged). Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/roles?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "admin",
+            "isDefault": false,
+            "isStatic": true,
+            "isPublic": true
+          }
+        ]
+      }
+    },
+    "POST /api/identity/roles": {
+      "summary": "Create role",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `POST /api/identity/roles`\n\n**Purpose**\n\nCreate role.\n\n**Parameters**\n\n- Body：`name`、`isDefault`、`isPublic` 等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Create role. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/identity/roles -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"operator\\\",\\\"isDefault\\\":false,\\\"isPublic\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/identity/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"operator\",\n  \"isDefault\": false,\n  \"isPublic\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "operator",
+        "isDefault": false,
+        "isPublic": true
+      },
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "operator",
+        "isDefault": false,
+        "isStatic": false,
+        "isPublic": true
+      }
+    },
+    "GET /api/identity/roles/all": {
+      "summary": "List all roles",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `GET /api/identity/roles/all`\n\n**Purpose**\n\nList all roles.\n\n**Parameters**\n\nNo paging parameters.\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List all roles. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/roles/all -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles/all HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "admin"
+          }
+        ]
+      }
+    },
+    "GET /api/identity/roles/{id}": {
+      "summary": "Get role by id",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `GET /api/identity/roles/{id}`\n\n**Purpose**\n\nGet role by id.\n\n**Parameters**\n\n- `id` (path，Guid)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get role by id. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "admin",
+        "isDefault": false,
+        "isStatic": true,
+        "isPublic": true
+      }
+    },
+    "PUT /api/identity/roles/{id}": {
+      "summary": "Update role",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `PUT /api/identity/roles/{id}`\n\n**Purpose**\n\nUpdate role.\n\n**Parameters**\n\n- `id` (path)。\n- Body：角色更新 DTO。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update role. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"operator\\\",\\\"isDefault\\\":false,\\\"isPublic\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"operator\",\n  \"isDefault\": false,\n  \"isPublic\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "operator",
+        "isDefault": false,
+        "isPublic": true,
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/identity/roles/{id}": {
+      "summary": "Delete role",
+      "description": "**Module:** Role (Swagger Tag: `Role`)\n\n**Endpoint:** `DELETE /api/identity/roles/{id}`\n\n**Purpose**\n\nDelete role.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete role. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/identity/roles/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/identity/roles/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users": {
+      "summary": "List users (paged)",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users`\n\n**Purpose**\n\nList users (paged).\n\n**Parameters**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`、`ExtraProperties`。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List users (paged). Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "userName": "admin",
+            "email": "admin@example.com"
+          }
+        ]
+      }
+    },
+    "POST /api/identity/users": {
+      "summary": "Create user",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `POST /api/identity/users`\n\n**Purpose**\n\nCreate user.\n\n**Parameters**\n\n- Body：`userName`、`email`、`password`、`name`、`surname`、`isActive`、`roleNames` 等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Create user. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/identity/users -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"op1\\\",\\\"email\\\":\\\"op1@example.com\\\",\\\"password\\\":\\\"1q2w3E*\\\",\\\"isActive\\\":true,\\\"roleNames\\\":[\\\"admin\\\"]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/identity/users HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"op1\",\n  \"email\": \"op1@example.com\",\n  \"password\": \"1q2w3E*\",\n  \"isActive\": true,\n  \"roleNames\": [\"admin\"]\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "op1",
+        "email": "op1@example.com",
+        "password": "1q2w3E*",
+        "isActive": true,
+        "lockoutEnabled": true,
+        "roleNames": [
+          "admin"
+        ]
+      }
+    },
+    "GET /api/identity/users/assignable-roles": {
+      "summary": "Get assignable roles",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users/assignable-roles`\n\n**Purpose**\n\nGet assignable roles.\n\n**Parameters**\n\nNo business parameters。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get assignable roles. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/assignable-roles -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/assignable-roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/by-email/{email}": {
+      "summary": "Get user by email",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users/by-email/{email}`\n\n**Purpose**\n\nGet user by email.\n\n**Parameters**\n\n- `email` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get user by email. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/by-email/admin@example.com\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/by-email/admin@example.com HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/by-username/{userName}": {
+      "summary": "Get user by user name",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users/by-username/{userName}`\n\n**Purpose**\n\nGet user by user name.\n\n**Parameters**\n\n- `userName` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get user by user name. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/by-username/admin -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/by-username/admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/by-username/{userName}": {
+      "summary": "Lookup user by user name",
+      "description": "**Module:** UserLookup (Swagger Tag: `UserLookup`)\n\n**Endpoint:** `GET /api/identity/users/lookup/by-username/{userName}`\n\n**Purpose**\n\nLookup user by user name.\n\n**Parameters**\n\n- `userName` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Lookup user by user name. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/lookup/by-username/admin -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/by-username/admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/count": {
+      "summary": "Count lookup users",
+      "description": "**Module:** UserLookup (Swagger Tag: `UserLookup`)\n\n**Endpoint:** `GET /api/identity/users/lookup/count`\n\n**Purpose**\n\nCount lookup users.\n\n**Parameters**\n\n- `Filter` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Count lookup users. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/lookup/count?Filter=adm\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/count?Filter=adm HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/search": {
+      "summary": "Search users (lookup)",
+      "description": "**Module:** UserLookup (Swagger Tag: `UserLookup`)\n\n**Endpoint:** `GET /api/identity/users/lookup/search`\n\n**Purpose**\n\nSearch users (lookup).\n\n**Parameters**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`、`ExtraProperties`。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Search users (lookup). Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/identity/users/lookup/search?Filter=adm&SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/search?Filter=adm&SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/lookup/{id}": {
+      "summary": "Lookup user by id",
+      "description": "**Module:** UserLookup (Swagger Tag: `UserLookup`)\n\n**Endpoint:** `GET /api/identity/users/lookup/{id}`\n\n**Purpose**\n\nLookup user by id.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Lookup user by id. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/lookup/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/lookup/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/{id}": {
+      "summary": "Get user by id",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users/{id}`\n\n**Purpose**\n\nGet user by id.\n\n**Parameters**\n\n- `id` (path，Guid)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get user by id. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "userName": "admin",
+        "email": "admin@example.com",
+        "name": null,
+        "surname": null,
+        "isActive": true
+      }
+    },
+    "PUT /api/identity/users/{id}": {
+      "summary": "Update user",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `PUT /api/identity/users/{id}`\n\n**Purpose**\n\nUpdate user.\n\n**Parameters**\n\n- `id` (path)。\n- Body：UpdateUserDto。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update user. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"userName\\\":\\\"op1\\\",\\\"email\\\":\\\"op1@example.com\\\",\\\"isActive\\\":true}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"userName\": \"op1\",\n  \"email\": \"op1@example.com\",\n  \"isActive\": true\n}"
+        }
+      ],
+      "requestExample": {
+        "userName": "op1",
+        "email": "op1@example.com",
+        "name": "Op",
+        "surname": "",
+        "isActive": true,
+        "lockoutEnabled": true,
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/identity/users/{id}": {
+      "summary": "Delete user",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `DELETE /api/identity/users/{id}`\n\n**Purpose**\n\nDelete user.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete user. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/identity/users/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/identity/users/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/identity/users/{id}/roles": {
+      "summary": "Get roles of user",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `GET /api/identity/users/{id}/roles`\n\n**Purpose**\n\nGet roles of user.\n\n**Parameters**\n\n- `id` (path)：用户 Id。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get roles of user. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/identity/users/{id}/roles -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/identity/users/{id}/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/identity/users/{id}/roles": {
+      "summary": "Update user roles",
+      "description": "**Module:** User (Swagger Tag: `User`)\n\n**Endpoint:** `PUT /api/identity/users/{id}/roles`\n\n**Purpose**\n\nUpdate user roles.\n\n**Parameters**\n\n- `id` (path)。\n- Body：`roleNames` 数组。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update user roles. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/identity/users/{id}/roles -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"roleNames\\\":[\\\"admin\\\"]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/identity/users/{id}/roles HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"roleNames\": [\"admin\"]\n}"
+        }
+      ],
+      "requestExample": {
+        "roleNames": [
+          "admin",
+          "operator"
+        ]
+      }
+    },
+    "GET /api/multi-tenancy/tenants": {
+      "summary": "List tenants (paged)",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `GET /api/multi-tenancy/tenants`\n\n**Purpose**\n\nList tenants (paged).\n\n**Parameters**\n\n- `Filter`、`Sorting`、`SkipCount`、`MaxResultCount`。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List tenants (paged). Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/multi-tenancy/tenants?SkipCount=0&MaxResultCount=10\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants?SkipCount=0&MaxResultCount=10 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "totalCount": 1,
+        "items": [
+          {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "acme"
+          }
+        ]
+      }
+    },
+    "POST /api/multi-tenancy/tenants": {
+      "summary": "Create tenant",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `POST /api/multi-tenancy/tenants`\n\n**Purpose**\n\nCreate tenant.\n\n**Parameters**\n\n- Body：`name`、管理员用户名/密码/邮箱等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Create tenant. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/multi-tenancy/tenants -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"acme\\\",\\\"adminEmailAddress\\\":\\\"admin@acme.com\\\",\\\"adminPassword\\\":\\\"1q2w3E*\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/multi-tenancy/tenants HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"acme\",\n  \"adminEmailAddress\": \"admin@acme.com\",\n  \"adminPassword\": \"1q2w3E*\"\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "acme",
+        "adminEmailAddress": "admin@acme.com",
+        "adminPassword": "1q2w3E*"
+      }
+    },
+    "GET /api/multi-tenancy/tenants/{id}": {
+      "summary": "Get tenant",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `GET /api/multi-tenancy/tenants/{id}`\n\n**Purpose**\n\nGet tenant.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get tenant. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "acme"
+      }
+    },
+    "PUT /api/multi-tenancy/tenants/{id}": {
+      "summary": "Update tenant",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `PUT /api/multi-tenancy/tenants/{id}`\n\n**Purpose**\n\nUpdate tenant.\n\n**Parameters**\n\n- `id` (path)。\n- Body：更新 DTO。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update tenant. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"acme\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"name\": \"acme\"\n}"
+        }
+      ],
+      "requestExample": {
+        "name": "acme",
+        "concurrencyStamp": ""
+      }
+    },
+    "DELETE /api/multi-tenancy/tenants/{id}": {
+      "summary": "Delete tenant",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `DELETE /api/multi-tenancy/tenants/{id}`\n\n**Purpose**\n\nDelete tenant.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete tenant. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/multi-tenancy/tenants/{id} -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/multi-tenancy/tenants/{id} HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "Get tenant default connection string",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `GET /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**Purpose**\n\nGet tenant default connection string.\n\n**Parameters**\n\n- `id` (path)：租户 Id。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get tenant default connection string. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/multi-tenancy/tenants/{id}/default-connection-string HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "Set tenant default connection string",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `PUT /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**Purpose**\n\nSet tenant default connection string.\n\n**Parameters**\n\n- `id` (path)。\n- `defaultConnectionString` (query，按 Swagger 绑定)：连接字符串。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Set tenant default connection string. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string?defaultConnectionString=Server%3D...;\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/multi-tenancy/tenants/{id}/default-connection-string?defaultConnectionString=Server%3D...; HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "DELETE /api/multi-tenancy/tenants/{id}/default-connection-string": {
+      "summary": "Delete tenant default connection string",
+      "description": "**Module:** Tenant (Swagger Tag: `Tenant`)\n\n**Endpoint:** `DELETE /api/multi-tenancy/tenants/{id}/default-connection-string`\n\n**Purpose**\n\nDelete tenant default connection string.\n\n**Parameters**\n\n- `id` (path)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete tenant default connection string. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE http://localhost:9000/api/multi-tenancy/tenants/{id}/default-connection-string -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/multi-tenancy/tenants/{id}/default-connection-string HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions": {
+      "summary": "Get permissions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions`\n\n**Purpose**\n\nGet permissions.\n\n**Parameters**\n\n- `providerName` (query)：如 `R` (Role)、`U` (User)。\n- `providerKey` (query)：角色名或用户 Id。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get permissions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions?providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions?providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "entityDisplayName": "admin",
+        "groups": []
+      }
+    },
+    "PUT /api/permission-management/permissions": {
+      "summary": "Update permissions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `PUT /api/permission-management/permissions`\n\n**Purpose**\n\nUpdate permissions.\n\n**Parameters**\n\n- Query：`providerName`、`providerKey`。\n- Body：权限名与 isGranted 列表。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update permissions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/permission-management/permissions?providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"permissions\\\":[{\\\"name\\\":\\\"AbpIdentity.Users\\\",\\\"isGranted\\\":true}]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/permission-management/permissions?providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"permissions\": [{\"name\": \"AbpIdentity.Users\", \"isGranted\": true}]\n}"
+        }
+      ],
+      "requestExample": {
+        "permissions": [
+          {
+            "name": "AbpIdentity.Users",
+            "isGranted": true
+          }
+        ]
+      }
+    },
+    "GET /api/permission-management/permissions/by-group": {
+      "summary": "Get permissions by group",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/by-group`\n\n**Purpose**\n\nGet permissions by group.\n\n**Parameters**\n\n- `groupName` (query)：权限组名。\n- `providerName`、`providerKey` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get permissions by group. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/by-group?groupName=AbpIdentity&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/by-group?groupName=AbpIdentity&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource": {
+      "summary": "Get resource permissions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/resource`\n\n**Purpose**\n\nGet resource permissions.\n\n**Parameters**\n\n- `resourceName`、`resourceKey` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get resource permissions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "PUT /api/permission-management/permissions/resource": {
+      "summary": "Update resource permissions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `PUT /api/permission-management/permissions/resource`\n\n**Purpose**\n\nUpdate resource permissions.\n\n**Parameters**\n\n- Query：`resourceName`、`resourceKey`。\n- Body：权限授予列表。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update resource permissions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X PUT \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1\" -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"permissions\\\":[]}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "PUT /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"permissions\": []\n}"
+        }
+      ],
+      "requestExample": {
+        "permissions": [
+          {
+            "name": "MyPermission",
+            "isGranted": true
+          }
+        ]
+      }
+    },
+    "DELETE /api/permission-management/permissions/resource": {
+      "summary": "Delete resource permissions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `DELETE /api/permission-management/permissions/resource`\n\n**Purpose**\n\nDelete resource permissions.\n\n**Parameters**\n\n- `resourceName`、`resourceKey`、`providerName`、`providerKey` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Delete resource permissions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X DELETE \"http://localhost:9000/api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "DELETE /api/permission-management/permissions/resource?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource-definitions": {
+      "summary": "Get resource permission definitions",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/resource-definitions`\n\n**Purpose**\n\nGet resource permission definitions.\n\n**Parameters**\n\n- `resourceName` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get resource permission definitions. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource-definitions?resourceName=MyResource\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource-definitions?resourceName=MyResource HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource-provider-key-lookup-services": {
+      "summary": "List resource provider-key lookup services",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/resource-provider-key-lookup-services`\n\n**Purpose**\n\nList resource provider-key lookup services.\n\n**Parameters**\n\n- `resourceName` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List resource provider-key lookup services. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource-provider-key-lookup-services?resourceName=MyResource\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource-provider-key-lookup-services?resourceName=MyResource HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/resource/by-provider": {
+      "summary": "Get resource permissions by provider",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/resource/by-provider`\n\n**Purpose**\n\nGet resource permissions by provider.\n\n**Parameters**\n\n- `resourceName`、`resourceKey`、`providerName`、`providerKey` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get resource permissions by provider. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/resource/by-provider?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/resource/by-provider?resourceName=MyResource&resourceKey=1&providerName=R&providerKey=admin HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/permission-management/permissions/search-resource-provider-keys": {
+      "summary": "Search resource provider keys",
+      "description": "**Module:** Permissions (Swagger Tag: `Permissions`)\n\n**Endpoint:** `GET /api/permission-management/permissions/search-resource-provider-keys`\n\n**Purpose**\n\nSearch resource provider keys.\n\n**Parameters**\n\n- `resourceName`、`serviceName`、`filter`、`page` (query)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Search resource provider keys. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl \"http://localhost:9000/api/permission-management/permissions/search-resource-provider-keys?resourceName=MyResource&serviceName=User&filter=adm&page=1\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/permission-management/permissions/search-resource-provider-keys?resourceName=MyResource&serviceName=User&filter=adm&page=1 HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/setting-management/emailing": {
+      "summary": "Get email settings",
+      "description": "**Module:** EmailSettings (Swagger Tag: `EmailSettings`)\n\n**Endpoint:** `GET /api/setting-management/emailing`\n\n**Purpose**\n\nGet email settings.\n\n**Parameters**\n\nNo extra parameters (subject to auth and tenant context).\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get email settings. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/emailing -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/emailing HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": {
+        "smtpHost": "smtp.example.com",
+        "smtpPort": 587,
+        "smtpUserName": "noreply@example.com",
+        "smtpEnableSsl": true,
+        "smtpUseDefaultCredentials": false,
+        "defaultFromAddress": "noreply@example.com",
+        "defaultFromDisplayName": "RCS"
+      }
+    },
+    "POST /api/setting-management/emailing": {
+      "summary": "Update email settings",
+      "description": "**Module:** EmailSettings (Swagger Tag: `EmailSettings`)\n\n**Endpoint:** `POST /api/setting-management/emailing`\n\n**Purpose**\n\nUpdate email settings.\n\n**Parameters**\n\n- Body：SMTP 主机/端口/账号/密码、SSL、默认发件人等。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update email settings. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/setting-management/emailing -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"smtpHost\\\":\\\"smtp.example.com\\\",\\\"smtpPort\\\":587,\\\"defaultFromAddress\\\":\\\"noreply@example.com\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/emailing HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"smtpHost\": \"smtp.example.com\",\n  \"smtpPort\": 587,\n  \"defaultFromAddress\": \"noreply@example.com\"\n}"
+        }
+      ],
+      "requestExample": {
+        "smtpHost": "smtp.example.com",
+        "smtpPort": 587,
+        "smtpUserName": "noreply@example.com",
+        "smtpPassword": "***",
+        "smtpEnableSsl": true,
+        "smtpUseDefaultCredentials": false,
+        "defaultFromAddress": "noreply@example.com",
+        "defaultFromDisplayName": "RCS"
+      }
+    },
+    "POST /api/setting-management/emailing/send-test-email": {
+      "summary": "Send test email",
+      "description": "**Module:** EmailSettings (Swagger Tag: `EmailSettings`)\n\n**Endpoint:** `POST /api/setting-management/emailing/send-test-email`\n\n**Purpose**\n\nSend test email.\n\n**Parameters**\n\n- Body：收件人、主题、正文等 (SendTestEmailInput)。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Send test email. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST http://localhost:9000/api/setting-management/emailing/send-test-email -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" -d \"{\\\"senderEmailAddress\\\":\\\"noreply@example.com\\\",\\\"targetEmailAddress\\\":\\\"you@example.com\\\",\\\"subject\\\":\\\"Test\\\",\\\"body\\\":\\\"Hello\\\"}\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/emailing/send-test-email HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"senderEmailAddress\": \"noreply@example.com\",\n  \"targetEmailAddress\": \"you@example.com\",\n  \"subject\": \"Test\",\n  \"body\": \"Hello\"\n}"
+        }
+      ],
+      "requestExample": {
+        "senderEmailAddress": "noreply@example.com",
+        "targetEmailAddress": "you@example.com",
+        "subject": "Test",
+        "body": "Hello"
+      }
+    },
+    "GET /api/setting-management/timezone": {
+      "summary": "Get timezone setting",
+      "description": "**Module:** TimeZoneSettings (Swagger Tag: `TimeZoneSettings`)\n\n**Endpoint:** `GET /api/setting-management/timezone`\n\n**Purpose**\n\nGet timezone setting.\n\n**Parameters**\n\nNo business parameters。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Get timezone setting. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/timezone -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/timezone HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": "UTC"
+    },
+    "POST /api/setting-management/timezone": {
+      "summary": "Update timezone",
+      "description": "**Module:** TimeZoneSettings (Swagger Tag: `TimeZoneSettings`)\n\n**Endpoint:** `POST /api/setting-management/timezone`\n\n**Purpose**\n\nUpdate timezone.\n\n**Parameters**\n\n- `timezone` (query，按实际绑定)：时区名。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: Update timezone. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl -X POST \"http://localhost:9000/api/setting-management/timezone?timezone=China%20Standard%20Time\" -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "POST /api/setting-management/timezone?timezone=China%20Standard%20Time HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ]
+    },
+    "GET /api/setting-management/timezone/timezones": {
+      "summary": "List timezones",
+      "description": "**Module:** TimeZoneSettings (Swagger Tag: `TimeZoneSettings`)\n\n**Endpoint:** `GET /api/setting-management/timezone/timezones`\n\n**Purpose**\n\nList timezones.\n\n**Parameters**\n\nNo business parameters。\n\n**Semantics**\n\nReturns the corresponding DTO or empty body per ABP conventions. See response schema and examples.\n\n**When to use**\n\nUse when you need: List timezones. Prefer this documented endpoint over ad-hoc HTTP calls.",
+      "callExamples": [
+        {
+          "title": "curl",
+          "language": "bash",
+          "code": "curl http://localhost:9000/api/setting-management/timezone/timezones -H \"Authorization: Bearer <token>\""
+        },
+        {
+          "title": "HTTP",
+          "language": "http",
+          "code": "GET /api/setting-management/timezone/timezones HTTP/1.1\nHost: localhost:9000\nAuthorization: Bearer <token>"
+        }
+      ],
+      "responseExample": [
+        {
+          "name": "UTC",
+          "value": "UTC"
+        }
+      ]
+    }
+  }
+}

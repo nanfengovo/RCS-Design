@@ -1,0 +1,219 @@
+/* RCS Swagger toolbar: language select + theme (below topbar, no overlap) */
+:root {
+  --rcs-swagger-toolbar-bg: #ffffff;
+  --rcs-swagger-toolbar-fg: #1f2937;
+  --rcs-swagger-toolbar-border: #d0d4dc;
+  --rcs-swagger-toolbar-accent: #89bf04;
+  --rcs-swagger-toolbar-muted: #6b7280;
+  --rcs-topbar-offset: 56px;
+}
+
+html[data-rcs-theme="dark"] {
+  --rcs-swagger-toolbar-bg: #252525;
+  --rcs-swagger-toolbar-fg: #f5f5f5;
+  --rcs-swagger-toolbar-border: #4b5563;
+  --rcs-swagger-toolbar-accent: #b8e03a;
+  --rcs-swagger-toolbar-muted: #d1d5db;
+}
+
+/* Sit under green topbar so we never cover "Select a definition" */
+.rcs-swagger-toolbar {
+  position: fixed;
+  top: calc(var(--rcs-topbar-offset) + 10px);
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rcs-swagger-toolbar-border);
+  border-radius: 10px;
+  background: var(--rcs-swagger-toolbar-bg);
+  color: var(--rcs-swagger-toolbar-fg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.rcs-swagger-toolbar .rcs-lang-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rcs-swagger-toolbar .rcs-lang-label {
+  font-size: 12px;
+  color: var(--rcs-swagger-toolbar-muted);
+  white-space: nowrap;
+}
+
+.rcs-swagger-toolbar select[data-rcs-culture-select] {
+  appearance: auto;
+  min-width: 128px;
+  max-width: 200px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--rcs-swagger-toolbar-border);
+  border-radius: 8px;
+  background: var(--rcs-swagger-toolbar-bg);
+  color: var(--rcs-swagger-toolbar-fg);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rcs-swagger-toolbar .rcs-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--rcs-swagger-toolbar-border);
+}
+
+.rcs-swagger-toolbar .rcs-icon-btn {
+  appearance: none;
+  border: 1px solid var(--rcs-swagger-toolbar-border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rcs-swagger-toolbar .rcs-icon-btn:hover {
+  border-color: var(--rcs-swagger-toolbar-accent);
+  background: rgba(137, 191, 4, 0.16);
+}
+
+.rcs-swagger-toolbar .rcs-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Reserve space so content isn't hidden under floating bar on narrow screens */
+@media (max-width: 900px) {
+  .rcs-swagger-toolbar {
+    top: auto;
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    justify-content: flex-end;
+  }
+}
+
+/* ========== Dark theme: high-contrast text ========== */
+html[data-rcs-theme="dark"] body {
+  background: #0f0f0f !important;
+  color: #f3f4f6 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui {
+  color: #f3f4f6 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .info .title,
+html[data-rcs-theme="dark"] .swagger-ui .info h1,
+html[data-rcs-theme="dark"] .swagger-ui .info h2,
+html[data-rcs-theme="dark"] .swagger-ui .info h3,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-tag,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-tag small,
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-summary-path,
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-summary-path__deprecated,
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-summary-operation-id,
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-summary-description {
+  color: #f9fafb !important;
+}
+
+/* Tag / operation long descriptions — was grey-on-black */
+html[data-rcs-theme="dark"] .swagger-ui .opblock-tag small,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-description-wrapper,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-description-wrapper p,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-external-docs-wrapper,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-external-docs-wrapper p,
+html[data-rcs-theme="dark"] .swagger-ui .renderedMarkdown,
+html[data-rcs-theme="dark"] .swagger-ui .renderedMarkdown p,
+html[data-rcs-theme="dark"] .swagger-ui .renderedMarkdown li,
+html[data-rcs-theme="dark"] .swagger-ui .markdown,
+html[data-rcs-theme="dark"] .swagger-ui .markdown p,
+html[data-rcs-theme="dark"] .swagger-ui .markdown li,
+html[data-rcs-theme="dark"] .swagger-ui .markdown strong,
+html[data-rcs-theme="dark"] .swagger-ui .info .description,
+html[data-rcs-theme="dark"] .swagger-ui .info .description p,
+html[data-rcs-theme="dark"] .swagger-ui .info li,
+html[data-rcs-theme="dark"] .swagger-ui .tab li,
+html[data-rcs-theme="dark"] .swagger-ui table thead tr td,
+html[data-rcs-theme="dark"] .swagger-ui table thead tr th,
+html[data-rcs-theme="dark"] .swagger-ui table tbody tr td,
+html[data-rcs-theme="dark"] .swagger-ui .parameter__name,
+html[data-rcs-theme="dark"] .swagger-ui .parameter__type,
+html[data-rcs-theme="dark"] .swagger-ui .parameter__in,
+html[data-rcs-theme="dark"] .swagger-ui .parameter__deprecated,
+html[data-rcs-theme="dark"] .swagger-ui .response-col_status,
+html[data-rcs-theme="dark"] .swagger-ui .response-col_description,
+html[data-rcs-theme="dark"] .swagger-ui .response-col_links,
+html[data-rcs-theme="dark"] .swagger-ui .model-title,
+html[data-rcs-theme="dark"] .swagger-ui .model,
+html[data-rcs-theme="dark"] .swagger-ui .prop-type,
+html[data-rcs-theme="dark"] .swagger-ui label,
+html[data-rcs-theme="dark"] .swagger-ui .btn,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-section-header h4,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-section-header label {
+  color: #f3f4f6 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .markdown code,
+html[data-rcs-theme="dark"] .swagger-ui .renderedMarkdown code,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-description-wrapper code {
+  color: #fde68a !important;
+  background: #374151 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui a.nostyle,
+html[data-rcs-theme="dark"] .swagger-ui .info a,
+html[data-rcs-theme="dark"] .swagger-ui .markdown a {
+  color: #93c5fd !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .scheme-container,
+html[data-rcs-theme="dark"] .swagger-ui .opblock,
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-section-header,
+html[data-rcs-theme="dark"] .swagger-ui .opblock-body,
+html[data-rcs-theme="dark"] .swagger-ui section.models,
+html[data-rcs-theme="dark"] .swagger-ui .model-box,
+html[data-rcs-theme="dark"] .swagger-ui .dialog-ux .modal-ux,
+html[data-rcs-theme="dark"] .swagger-ui .dialog-ux .modal-ux-content {
+  background: #1a1a1a !important;
+  color: #f3f4f6 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .opblock .opblock-summary {
+  border-color: #404040 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui input[type="text"],
+html[data-rcs-theme="dark"] .swagger-ui input[type="password"],
+html[data-rcs-theme="dark"] .swagger-ui input[type="search"],
+html[data-rcs-theme="dark"] .swagger-ui input[type="email"],
+html[data-rcs-theme="dark"] .swagger-ui textarea,
+html[data-rcs-theme="dark"] .swagger-ui select {
+  background: #2b2b2b !important;
+  color: #f9fafb !important;
+  border-color: #555 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .topbar {
+  background: #0a0a0a !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .topbar .download-url-wrapper .select-label,
+html[data-rcs-theme="dark"] .swagger-ui .topbar .download-url-wrapper .select-label span {
+  color: #f3f4f6 !important;
+}
+
+html[data-rcs-theme="dark"] .swagger-ui .microlight {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+}

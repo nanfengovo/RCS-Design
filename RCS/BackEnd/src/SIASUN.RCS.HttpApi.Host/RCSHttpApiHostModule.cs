@@ -250,6 +250,27 @@ public class RCSHttpApiHostModule : AbpModule
 
     private static void ConfigureSwagger(ServiceConfigurationContext context, IConfiguration configuration)
     {
+        context.Services.Configure<SwaggerDocStoreOptions>(opt =>
+        {
+            opt.RelativeDirectory = Path.Combine("Swagger", "i18n");
+            opt.DefaultCulture = "zh-Hans";
+        });
+
+        // 启动扫描 i18n；按 group.culture 注册文档，Swashbuckle 按文档名缓存（高性能）
+        var docStore = new SwaggerDocStore(
+            Microsoft.Extensions.Options.Options.Create(new SwaggerDocStoreOptions
+            {
+                RelativeDirectory = Path.Combine("Swagger", "i18n"),
+                DefaultCulture = "zh-Hans"
+            }));
+        context.Services.AddSingleton<ISwaggerDocStore>(docStore);
+        context.Services.AddTransient<SwaggerDocOperationFilter>();
+        context.Services.AddTransient<SwaggerDocDocumentFilter>();
+
+        var cultures = docStore.AvailableCultures.Count > 0
+            ? docStore.AvailableCultures
+            : (IReadOnlyList<string>)[docStore.DefaultCulture];
+
         context.Services.AddAbpSwaggerGenWithOidc(
             configuration["AuthServer:Authority"]!,
             ["RCS"],
@@ -259,25 +280,38 @@ public class RCSHttpApiHostModule : AbpModule
             {
                 options.OperationFilter<SwaggerDocOperationFilter>();
                 options.DocumentFilter<SwaggerDocDocumentFilter>();
-                options.SwaggerDoc("abp", new OpenApiInfo { Title = "ABP 框架内置API", Version = "v1", Description = "框架内置：应用配置、本地化、多租户探测等" });
-                options.SwaggerDoc("rcs", new OpenApiInfo { Title = "RCS 通用业务API", Version = "v1", Description = "RCS通用业务" });
-                options.SwaggerDoc("dashboard", new OpenApiInfo { Title = "Dashboard API", Version = "v1", Description = "仪表板 API" });
-                options.SwaggerDoc("common", new OpenApiInfo { Title = "通用 API", Version = "v1", Description = "通用 API" });
-                options.SwaggerDoc("all", new OpenApiInfo { Title = "all API", Version = "v1", Description = "所有API" });
-                // 按路径前缀过滤
+
+                foreach (var culture in cultures)
+                {
+                    options.SwaggerDoc(SwaggerDocNames.Format("abp", culture),
+                        new OpenApiInfo { Title = "ABP API", Version = "v1", Description = $"ABP built-in APIs [{culture}]" });
+                    options.SwaggerDoc(SwaggerDocNames.Format("rcs", culture),
+                        new OpenApiInfo { Title = "RCS API", Version = "v1", Description = $"RCS business APIs [{culture}]" });
+                    options.SwaggerDoc(SwaggerDocNames.Format("dashboard", culture),
+                        new OpenApiInfo { Title = "Dashboard API", Version = "v1", Description = $"Dashboard APIs [{culture}]" });
+                    options.SwaggerDoc(SwaggerDocNames.Format("common", culture),
+                        new OpenApiInfo { Title = "Common API", Version = "v1", Description = $"Common APIs [{culture}]" });
+                    options.SwaggerDoc(SwaggerDocNames.Format("all", culture),
+                        new OpenApiInfo { Title = "All API", Version = "v1", Description = $"All APIs [{culture}]" });
+                }
+
                 options.DocInclusionPredicate((docName, description) =>
                 {
+                    if (!SwaggerDocNames.TryParse(docName, out var group, out _))
+                        return false;
+
                     if (!description.TryGetMethodInfo(out var method))
-                        return docName == "all";
+                        return group == "all";
+
                     var asm = method.DeclaringType?.Assembly.GetName().Name ?? "";
                     var isAbp = asm.StartsWith("Volo.Abp", StringComparison.OrdinalIgnoreCase);
-                    var group = description.GroupName; // 业务侧可选 [ApiExplorerSettings(GroupName=...)]
-                    return docName switch
+                    var apiGroup = description.GroupName;
+                    return group switch
                     {
                         "abp" => isAbp,
-                        "rcs" =>group == "rcs",
-                        "dashboard" => group == "dashboard",
-                        "common" => group == "common",
+                        "rcs" => apiGroup == "rcs",
+                        "dashboard" => apiGroup == "dashboard",
+                        "common" => apiGroup == "common",
                         "all" => true,
                         _ => false
                     };
@@ -286,11 +320,8 @@ public class RCSHttpApiHostModule : AbpModule
 
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, "SIASUN.RCS.HttpApi.xml");
                 if (File.Exists(xmlPath))
-                {
                     options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
-                }
 
-                // 若业务注释写在 Application / Application.Contracts，也要一并 Include
                 var appXml = Path.Combine(AppContext.BaseDirectory, "SIASUN.RCS.Application.xml");
                 if (File.Exists(appXml))
                     options.IncludeXmlComments(appXml);
@@ -365,11 +396,18 @@ public class RCSHttpApiHostModule : AbpModule
 
         app.UseAbpSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/swagger/abp/swagger.json", "ABP API");
-            options.SwaggerEndpoint("/swagger/rcs/swagger.json", "RCS API");
-            options.SwaggerEndpoint("/swagger/dashboard/swagger.json", "Dashboard API");
-            options.SwaggerEndpoint("/swagger/all/swagger.json", "All API");
-            options.SwaggerEndpoint("/swagger/common/swagger.json", "Common API");
+            var swaggerDocStore = context.ServiceProvider.GetRequiredService<ISwaggerDocStore>();
+            var uiCulture = swaggerDocStore.DefaultCulture;
+
+            // UI 下拉只挂默认文化；语言切换由 rcs-swagger.js 动态改写为 group.culture
+            options.SwaggerEndpoint($"/swagger/abp.{uiCulture}/swagger.json", "ABP API");
+            options.SwaggerEndpoint($"/swagger/rcs.{uiCulture}/swagger.json", "RCS API");
+            options.SwaggerEndpoint($"/swagger/dashboard.{uiCulture}/swagger.json", "Dashboard API");
+            options.SwaggerEndpoint($"/swagger/all.{uiCulture}/swagger.json", "All API");
+            options.SwaggerEndpoint($"/swagger/common.{uiCulture}/swagger.json", "Common API");
+
+            options.InjectJavascript("/swagger-ui/rcs-swagger.js?v=2");
+            options.InjectStylesheet("/swagger-ui/rcs-swagger.css?v=2");
 
             var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
             var swaggerClientId = configuration["AuthServer:SwaggerClientId"];
@@ -378,7 +416,7 @@ public class RCSHttpApiHostModule : AbpModule
             options.OAuthUsePkce();
             // Swagger UI 的 OIDC 换 token 请求不会带上 client_id，OpenIddict 会因此返回 ID2029。
             options.UseRequestInterceptor(
-    "(req) => { const url = req.url || ''; if (!url.includes('/connect/token')) return req; const id = '" + swaggerClientId + "'; if (req.body && typeof req.body.append === 'function') { req.body.append('client_id', id); return req; } if (typeof req.body === 'string' && req.body.indexOf('client_id=') < 0) { req.body += (req.body ? '&' : '') + 'client_id=' + encodeURIComponent(id); } return req; }");
+                "(req) => { const url = req.url || ''; if (!url.includes('/connect/token')) return req; const id = '" + swaggerClientId + "'; if (req.body && typeof req.body.append === 'function') { req.body.append('client_id', id); return req; } if (typeof req.body === 'string' && req.body.indexOf('client_id=') < 0) { req.body += (req.body ? '&' : '') + 'client_id=' + encodeURIComponent(id); } return req; }");
         });
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();

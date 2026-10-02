@@ -10,13 +10,24 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace SIASUN.RCS.Swagger
 {
     /// <summary>
-    /// 把 SwaggerDoc.json 里的词条贴到对应 OpenAPI Operation 上。
+    /// 按文档名中的文化，把 i18n JSON 贴到 Operation 上。
     /// </summary>
     public class SwaggerDocOperationFilter : IOperationFilter
     {
+        private readonly ISwaggerDocStore _store;
+
+        public SwaggerDocOperationFilter(ISwaggerDocStore store)
+        {
+            _store = store;
+        }
+
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            if (!SwaggerDocStore.Instance.TryGet(
+            var culture = SwaggerDocNames.GetCulture(context.DocumentName) ?? _store.DefaultCulture;
+            culture = _store.ResolveCulture(culture);
+
+            if (!_store.TryGetOperation(
+                    culture,
                     context.ApiDescription.HttpMethod,
                     context.ApiDescription.RelativePath,
                     out var doc)
@@ -31,12 +42,9 @@ namespace SIASUN.RCS.Swagger
 
             ApplyRequestExample(operation, doc);
             ApplyResponseExample(operation, doc);
-            ApplyCallExamples(operation, doc);
+            ApplyCallExamples(operation, doc, culture);
         }
 
-        /// <summary>
-        /// 请求体 Example：挂到所有 *json media type（避免 UI 选到 text/json 时看不到）。
-        /// </summary>
         private static void ApplyRequestExample(OpenApiOperation operation, ApiDoc doc)
         {
             if (doc.RequestExample is not { } reqEx
@@ -50,9 +58,6 @@ namespace SIASUN.RCS.Swagger
             SetExampleOnJsonContent(operation.RequestBody.Content, node);
         }
 
-        /// <summary>
-        /// 200 响应 Example：没有 Content / json 时补上，保证能写进去。
-        /// </summary>
         private static void ApplyResponseExample(OpenApiOperation operation, ApiDoc doc)
         {
             if (doc.ResponseExample is not { } resEx
@@ -65,7 +70,6 @@ namespace SIASUN.RCS.Swagger
 
             operation.Responses ??= new OpenApiResponses();
 
-            // Responses 存的是 IOpenApiResponse（Content 只读接口），需要可写的 OpenApiResponse
             OpenApiResponse writable;
             if (operation.Responses.TryGetValue("200", out var existing) && existing is OpenApiResponse existingWritable)
             {
@@ -102,10 +106,7 @@ namespace SIASUN.RCS.Swagger
             }
         }
 
-        /// <summary>
-        /// 调用示例没有标准 OpenAPI 字段 → 拼进 Description（Markdown）。
-        /// </summary>
-        private static void ApplyCallExamples(OpenApiOperation operation, ApiDoc doc)
+        private static void ApplyCallExamples(OpenApiOperation operation, ApiDoc doc, string culture)
         {
             if (doc.CallExamples is not { Count: > 0 })
                 return;
@@ -114,7 +115,10 @@ namespace SIASUN.RCS.Swagger
             if (!string.IsNullOrWhiteSpace(operation.Description))
                 sb.AppendLine(operation.Description).AppendLine();
 
-            sb.AppendLine("### 调用示例");
+            var examplesHeading = culture.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
+                ? "### 调用示例"
+                : "### Examples";
+            sb.AppendLine(examplesHeading);
             foreach (var ex in doc.CallExamples)
             {
                 if (string.IsNullOrWhiteSpace(ex.Code))
@@ -131,9 +135,6 @@ namespace SIASUN.RCS.Swagger
             operation.Description = sb.ToString();
         }
 
-        /// <summary>
-        /// 对 Content 里每个含 json 的 media type：保留 Schema，整项换成带 Example 的 OpenApiMediaType。
-        /// </summary>
         private static void SetExampleOnJsonContent(
             IDictionary<string, OpenApiMediaType> content,
             JsonNode node)
